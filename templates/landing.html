@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}UniTrade | Luxury Campus Marketplace{% endblock %}
+
+{% block extra_css %}
+  <link href="{% static 'css/landing.css' %}" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+  <section class="landing-hero" id="hero">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <p class="eyebrow">University of Windsor Marketplace</p>
+        <h1 class="display-5 fw-semibold">Buy &amp; Sell on Campus, With Confidence.</h1>
+        <p class="lead text-muted mt-3">
+          A trusted UWindsor only marketplace for textbooks, furniture, electronics, and more.
+        </p>
+        <div class="d-flex flex-wrap gap-3 mt-4">
+          <a class="btn btn-primary btn-lg" href="{% url 'marketplace:browse' %}">Browse Listings</a>
+          <a class="btn btn-outline-primary btn-lg" href="{% url 'marketplace:register' %}">
+            Create Account
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="hero-collage">
+          <div class="hero-card large">
+            <div class="hero-card-body">
+              <p class="text-uppercase small text-muted mb-2">Premium Picks</p>
+              <h5 class="mb-3">Curated campus deals</h5>
+              <div class="hero-tags">
+                <span>Textbooks</span>
+                <span>Electronics</span>
+                <span>Furniture</span>
+              </div>
+            </div>
+          </div>
+          <div class="hero-card accent">
+            <div class="hero-card-body">
+              <p class="text-uppercase small mb-2">Verified Students</p>
+              <h6 class="mb-0">Trade with confidence</h6>
+            </div>
+          </div>
+          <div class="hero-card mini">
+            <div class="hero-card-body">
+              <p class="text-uppercase small mb-1">UniTrade</p>
+              <span class="badge text-bg-light border">Premium Campus Market</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section" id="highlights">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="icon-card">
+          <div class="icon-circle">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L20 6V12C20 16.418 16.418 20 12 22C7.582 20 4 16.418 4 12V6L12 2Z" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h5>Verified students</h5>
+          <p class="text-muted">Trade exclusively with UWindsor students for safer exchanges.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="icon-card">
+          <div class="icon-circle">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3C7.582 3 4 6.582 4 11C4 15.418 7.582 19 12 19C16.418 19 20 15.418 20 11C20 6.582 16.418 3 12 3Z" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M12 7V11L15 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h5>Safer trades</h5>
+          <p class="text-muted">Message in-app, schedule meetups, and keep control of your time.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="icon-card">
+          <div class="icon-circle">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M4 7H20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M7 7V17C7 19.209 8.791 21 11 21H13C15.209 21 17 19.209 17 17V7" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M9 11H15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h5>Better deals</h5>
+          <p class="text-muted">Skip marketplace fees and score premium items at student prices.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section" id="categories">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="section-title">Featured Categories</h3>
+      <a class="text-decoration-none gold-link" href="{% url 'marketplace:browse' %}">Browse all</a>
+    </div>
+    <div class="row g-4">
+      {% for category in category_tiles %}
+        <div class="col-6 col-lg-4">
+          <a class="category-tile" href="{% url 'marketplace:browse' %}">
+            <span>{{ category }}</span>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="landing-section" id="featured">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="section-title">Featured Listings</h3>
+      <a class="text-decoration-none gold-link" href="{% url 'marketplace:browse' %}">View more</a>
+    </div>
+    <div class="row g-4">
+      {% if landing_listings %}
+        {% for item in landing_listings %}
+          <div class="col-md-6 col-xl-4">
+            <div class="listing-card">
+              <div class="listing-image">
+                {% if item.images.first %}
+                  <img src="{{ item.images.first.image.url }}" alt="{{ item.title }}">
+                {% else %}
+                  <div class="listing-placeholder"></div>
+                {% endif %}
+              </div>
+              <div class="listing-body">
+                <h5>{{ item.title }}</h5>
+                <p class="text-muted small">{{ item.get_condition_display }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="price-tag">${{ item.price|floatformat:2 }}</span>
+                  <a class="btn btn-outline-primary btn-sm" href="{% url 'marketplace:item_detail' item.pk %}">
+                    View
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        {% for _ in placeholder_listings %}
+          <div class="col-md-6 col-xl-4">
+            <div class="listing-card">
+              <div class="listing-image">
+                <div class="listing-placeholder"></div>
+              </div>
+              <div class="listing-body">
+                <h5>Premium Listing</h5>
+                <p class="text-muted small">Like New</p>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="price-tag">$80.00</span>
+                  <a class="btn btn-outline-primary btn-sm" href="{% url 'marketplace:browse' %}">View</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="landing-section" id="how-it-works">
+    <h3 class="section-title text-center mb-4">How It Works</h3>
+    <div class="row g-4 justify-content-center">
+      <div class="col-md-4">
+        <div class="step-card">
+          <span class="step-number">01</span>
+          <h5>Browse</h5>
+          <p class="text-muted">Explore listings curated for UWindsor students.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card">
+          <span class="step-number">02</span>
+          <h5>Connect</h5>
+          <p class="text-muted">Message sellers directly and confirm availability.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card">
+          <span class="step-number">03</span>
+          <h5>Trade</h5>
+          <p class="text-muted">Meet on campus and complete your exchange with ease.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <div class="cta-inner">
+      <div>
+        <h3>Ready to list your first item?</h3>
+        <p class="cta-subtitle mb-0">Join the premium campus marketplace today.</p>
+      </div>
+      <a class="btn btn-light" href="{% url 'marketplace:register' %}">Get Started</a>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <span class="brand-wordmark">UniTrade</span>
+      <div class="footer-links">
+        <a href="{% url 'marketplace:browse' %}">Browse</a>
+        <a href="{% url 'marketplace:register' %}">Register</a>
+        <a href="{% url 'login' %}">Login</a>
+      </div>
+      <span class="text-muted small">&copy; 2026 UniTrade, UWindsor</span>
+    </div>
+  </footer>
+{% endblock %}

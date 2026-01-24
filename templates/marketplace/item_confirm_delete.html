@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Item | UniTrade{% endblock %}
+
+{% block content %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h3>Delete listing</h3>
+      <p>Are you sure you want to delete "{{ object.title }}"?</p>
+      <form method="post">
+        {% csrf_token %}
+        <button class="btn btn-danger" type="submit">Yes, delete</button>
+        <a href="{% url 'marketplace:item_detail' object.pk %}" class="btn btn-outline-secondary">Cancel</a>
+      </form>
+    </div>
+  </div>
+{% endblock %}

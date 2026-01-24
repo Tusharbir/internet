@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | UniTrade{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>My dashboard</h2>
+    <a href="{% url 'marketplace:item_post' %}" class="btn btn-primary">Post new ad</a>
+  </div>
+
+  <h4 class="mt-4">My drafts</h4>
+  <div class="row g-4">
+    {% for item in draft_items %}
+      <div class="col-md-6 col-xl-4">
+        <div class="card h-100 shadow-sm">
+          {% if item.images.first %}
+            <img src="{{ item.images.first.image.url }}" class="card-img-top" alt="{{ item.title }}">
+          {% endif %}
+          <div class="card-body">
+            <h5>{{ item.title }}</h5>
+            <p class="text-muted">{{ item.category.name }}</p>
+            <div class="d-flex gap-2">
+              <a href="{% url 'marketplace:item_update' item.pk %}" class="btn btn-outline-secondary btn-sm">Edit</a>
+              <a href="{% url 'marketplace:item_delete' item.pk %}" class="btn btn-outline-danger btn-sm">Delete</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-muted">No draft listings.</div>
+    {% endfor %}
+  </div>
+
+  <h4 class="mt-5">My published listings</h4>
+  <div class="row g-4">
+    {% for item in published_items %}
+      <div class="col-md-6 col-xl-4">
+        <div class="card h-100 shadow-sm">
+          {% if item.images.first %}
+            <img src="{{ item.images.first.image.url }}" class="card-img-top" alt="{{ item.title }}">
+          {% endif %}
+          <div class="card-body">
+            <h5>{{ item.title }}</h5>
+            <p class="text-muted">{{ item.category.name }}</p>
+            <div class="d-flex gap-2">
+              <a href="{% url 'marketplace:item_update' item.pk %}" class="btn btn-outline-secondary btn-sm">Edit</a>
+              <form method="post" action="{% url 'marketplace:item_mark_sold' item.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-dark btn-sm" type="submit">Mark sold</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-muted">No published listings yet.</div>
+    {% endfor %}
+  </div>
+
+  <h4 class="mt-5">My sold listings</h4>
+  <div class="row g-4">
+    {% for item in sold_items %}
+      <div class="col-md-6 col-xl-4">
+        <div class="card h-100 shadow-sm">
+          {% if item.images.first %}
+            <img src="{{ item.images.first.image.url }}" class="card-img-top" alt="{{ item.title }}">
+          {% endif %}
+          <div class="card-body">
+            <h5>{{ item.title }}</h5>
+            <p class="text-muted">{{ item.category.name }}</p>
+            <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-outline-primary btn-sm">View</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-muted">No sold listings yet.</div>
+    {% endfor %}
+  </div>
+
+  <h3 class="mt-5">Recently viewed</h3>
+  <div class="row g-4">
+    {% for item in recently_viewed %}
+      <div class="col-md-6 col-xl-3">
+        <div class="card h-100 shadow-sm">
+          {% if item.images.first %}
+            <img src="{{ item.images.first.image.url }}" class="card-img-top" alt="{{ item.title }}">
+          {% endif %}
+          <div class="card-body">
+            <h6>{{ item.title }}</h6>
+            <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-link p-0">View</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-muted">No recently viewed items yet.</div>
+    {% endfor %}
+  </div>
+{% endblock %}

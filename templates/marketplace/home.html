@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}UniTrade | Browse{% endblock %}
+
+{% block content %}
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Search & Filters</h5>
+          <form method="get" class="vstack gap-3">
+            {{ filter_form.q.label_tag }}
+            {{ filter_form.q }}
+            {{ filter_form.category.label_tag }}
+            {{ filter_form.category }}
+            {{ filter_form.condition.label_tag }}
+            {{ filter_form.condition }}
+            {{ filter_form.sort.label_tag }}
+            {{ filter_form.sort }}
+            {{ filter_form.min_price.label_tag }}
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              {{ filter_form.min_price }}
+            </div>
+            {{ filter_form.max_price.label_tag }}
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              {{ filter_form.max_price }}
+            </div>
+            <button class="btn btn-primary w-100" type="submit">Apply</button>
+          </form>
+        </div>
+      </div>
+      {% if featured_items %}
+        <div class="card shadow-sm mt-4">
+          <div class="card-body">
+            <h5 class="card-title">Featured</h5>
+            <ul class="list-unstyled mb-0">
+              {% for item in featured_items %}
+                <li class="mb-2">
+                  <a class="text-decoration-none" href="{% url 'marketplace:item_detail' item.pk %}">
+                    {{ item.title }}
+                  </a>
+                  <div class="text-muted small">${{ item.price|floatformat:2 }}</div>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="col-lg-9">
+      <h2 class="mb-3 section-title">Latest listings</h2>
+      <div class="row g-4">
+        {% for item in items %}
+          <div class="col-md-6 col-xl-4">
+            <div class="card h-100 shadow-sm">
+              {% if item.images.first %}
+                <img src="{{ item.images.first.image.url }}" class="card-img-top" alt="{{ item.title }}">
+              {% endif %}
+              <div class="card-body">
+                <h5 class="card-title">{{ item.title }}</h5>
+                <p class="card-text text-muted small">
+                  {{ item.category.name }} • {{ item.get_condition_display }}
+                </p>
+                {% if item.status == 'sold' %}
+                  <span class="badge text-bg-dark mb-2">Sold</span>
+                {% endif %}
+                <p class="card-text fw-semibold">${{ item.price|floatformat:2 }}</p>
+                <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-outline-primary btn-sm">
+                  View details
+                </a>
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="col-12">
+            <div class="alert alert-info">No items found yet. Be the first to post!</div>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if is_paginated %}
+        <nav class="mt-4">
+          <ul class="pagination">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+              </li>
+            {% endif %}
+            <li class="page-item active">
+              <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

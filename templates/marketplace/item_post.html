@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Post Ad | UniTrade{% endblock %}
+
+{% block content %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h3 class="card-title mb-3">Post a new listing</h3>
+      <form method="post" enctype="multipart/form-data" class="vstack gap-3" id="post-ad-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div>
+          {{ form.title.label_tag }}
+          {{ form.title }}
+        </div>
+        <div>
+          {{ form.description.label_tag }}
+          {{ form.description }}
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            {{ form.price.label_tag }}
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              {{ form.price }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            {{ form.condition.label_tag }}
+            {{ form.condition }}
+          </div>
+        </div>
+        <div>
+          {{ form.category.label_tag }}
+          {{ form.category }}
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            {{ form.location.label_tag }}
+            {{ form.location }}
+          </div>
+          <div class="col-md-6">
+            {{ form.status.label_tag }}
+            {{ form.status }}
+          </div>
+        </div>
+        <div class="form-check form-switch">
+          {{ form.negotiable }}
+          <label class="form-check-label" for="{{ form.negotiable.id_for_label }}">
+            Negotiable
+          </label>
+        </div>
+        <div>
+          {{ form.images.label_tag }}
+          {{ form.images }}
+          <div class="form-text">{{ form.images.help_text }}</div>
+        </div>
+        <div id="image-preview" class="row g-2"></div>
+        <button type="submit" class="btn btn-primary">Save listing</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById("id_images");
+    const preview = document.getElementById("image-preview");
+
+    if (input) {
+      input.addEventListener("change", () => {
+        preview.innerHTML = "";
+        const files = Array.from(input.files).slice(0, 6);
+        files.forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const col = document.createElement("div");
+            col.className = "col-4";
+            col.innerHTML = `
+              <div class="border rounded-3 p-2 bg-white">
+                <img src="${event.target.result}" alt="Preview" class="img-fluid rounded">
+              </div>
+            `;
+            preview.appendChild(col);
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+    }
+  </script>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Messages | UniTrade{% endblock %}
+
+{% block content %}
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h3>Messages about "{{ item.title }}"</h3>
+      <p class="text-muted">Seller: {{ seller }}</p>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      {% for message in messages %}
+        <div class="mb-3">
+          <div class="small text-muted">
+            {{ message.sender }} • {{ message.created_at|date:"M d, Y H:i" }}
+          </div>
+          <div class="p-3 bg-light rounded">
+            {{ message.body }}
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-muted">No messages yet. Start the conversation.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5>Send a message</h5>
+      <form method="post">
+        {% csrf_token %}
+        {{ form.body }}
+        <button class="btn btn-primary mt-3" type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}
