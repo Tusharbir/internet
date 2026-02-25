@@ -38,7 +38,7 @@
     </div>
   </div>
 
-  <!-- Visit History (Session/Cookie tracking) -->
+  <!-- Visit History   (Session/Cookie tracking) -->
   {% if visit_history %}
     <div class="card shadow-sm mb-4">
       <div class="card-body">
@@ -72,7 +72,7 @@
     </div>
   {% endif %}
 
-  <!-- Drafts -->
+  <!--  Drafts -->
   <h4 class="mt-4"><i class="bi bi-file-earmark-text"></i> My Drafts</h4>
   <div class="row g-4">
     {% for item in draft_items %}
@@ -106,7 +106,7 @@
     {% endfor %}
   </div>
 
-  <!-- Published -->
+  <!--  Published -->
   <h4 class="mt-5"><i class="bi bi-broadcast"></i> My Published Listings</h4>
   <div class="row g-4">
     {% for item in published_items %}
@@ -143,7 +143,7 @@
     {% endfor %}
   </div>
 
-  <!-- Sold -->
+  <!--  Sold -->
   <h4 class="mt-5"><i class="bi bi-check-circle"></i> My Sold Listings</h4>
   <div class="row g-4">
     {% for item in sold_items %}
@@ -173,7 +173,7 @@
     {% endfor %}
   </div>
 
-  <!-- Recently Viewed -->
+  <!-- R ecently Viewed -->
   <h4 class="mt-5"><i class="bi bi-clock-history"></i> Recently Viewed</h4>
   <div class="row g-4">
     {% for item in recently_viewed %}
@@ -229,3 +229,4 @@
     {% endfor %}
   </div>
 {% endblock %}
+ 
