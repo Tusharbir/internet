@@ -99,6 +99,7 @@ class AuthViewTests(TestCase):
             'first_name': 'Test',
             'last_name': 'User',
             'email': 'new@uwindsor.ca',
+            'university_email': 'new@uwindsor.ca',
             'password1': 'Str0ngP@ss!',
             'password2': 'Str0ngP@ss!',
         })
@@ -114,6 +115,7 @@ class AuthViewTests(TestCase):
             'first_name': 'Test',
             'last_name': 'User',
             'email': 'taken@example.com',
+            'university_email': 'taken@uwindsor.ca',
             'password1': 'Str0ngP@ss!',
             'password2': 'Str0ngP@ss!',
         })
@@ -160,6 +162,81 @@ class AuthViewTests(TestCase):
 
         self.assertRedirects(response, reverse('marketplace:landing'))
         self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_password_reset_page_loads(self):
+        response = self.client.get(reverse('password_reset'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Reset your password')
+
+    def test_logged_in_navbar_shows_profile_link(self):
+        user = User.objects.create_user(username='profileowner', password='testpass123')
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('marketplace:browse'))
+
+        self.assertContains(response, reverse('marketplace:profile'))
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class ProfileViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='member',
+            password='testpass123',
+            email='member@uwindsor.ca',
+            university_email='member@uwindsor.ca',
+            first_name='Member',
+            last_name='User',
+            student_id='00112233',
+        )
+
+    def test_profile_requires_login(self):
+        response = self.client.get(reverse('marketplace:profile'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('login'), response.url)
+
+    def test_profile_page_loads_for_logged_in_user(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('marketplace:profile'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'My Profile')
+        self.assertContains(response, 'member@uwindsor.ca')
+        self.assertContains(response, '00112233')
+
+    def test_profile_edit_updates_user_details(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('marketplace:profile_edit'), {
+            'first_name': 'Kunal',
+            'last_name': 'Rastogi',
+            'email': 'kunal@uwindsor.ca',
+            'university_email': 'kunal@uwindsor.ca',
+            'student_id': '99887766',
+        })
+
+        self.assertRedirects(response, reverse('marketplace:profile'))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Kunal')
+        self.assertEqual(self.user.last_name, 'Rastogi')
+        self.assertEqual(self.user.email, 'kunal@uwindsor.ca')
+        self.assertEqual(self.user.university_email, 'kunal@uwindsor.ca')
+        self.assertEqual(self.user.student_id, '99887766')
+
+    def test_profile_edit_rejects_non_uwindsor_university_email(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('marketplace:profile_edit'), {
+            'first_name': 'Member',
+            'last_name': 'User',
+            'email': 'member@example.com',
+            'university_email': 'member@example.com',
+            'student_id': '00112233',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Please use your @uwindsor.ca email address.')
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
