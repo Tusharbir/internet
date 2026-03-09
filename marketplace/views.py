@@ -70,6 +70,18 @@ def parse_session_datetime(value):
         return None
 
 
+def get_recently_viewed_queryset(request):
+    viewed_ids = request.session.get('recently_viewed_items', [])
+    if not viewed_ids:
+        return Item.objects.none()
+    ordering = Case(*[When(id=pk, then=pos) for pos, pk in enumerate(viewed_ids)])
+    return (
+        Item.objects.filter(id__in=viewed_ids)
+        .prefetch_related('images')
+        .order_by(ordering)
+    )
+
+
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_staff
@@ -164,6 +176,20 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, 'Your profile was updated successfully.')
         return super().form_valid(form)
+
+
+class HistoryView(LoginRequiredMixin, TemplateView):
+    template_name = 'marketplace/history.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['visit_count'] = int(self.request.session.get('visit_count', 0))
+        context['last_visit_at'] = parse_session_datetime(self.request.session.get('last_visit_at'))
+        context['current_visit_at'] = parse_session_datetime(self.request.session.get('current_visit_at'))
+        context['visit_history'] = self.request.session.get('visit_history', {})
+        context['recently_viewed'] = get_recently_viewed_queryset(self.request)
+        context['recently_viewed_count'] = context['recently_viewed'].count()
+        return context
 
 
 class LandingView(TemplateView):
@@ -380,16 +406,7 @@ class DashboardView(LoginRequiredMixin, ListView):
         ).prefetch_related('images')
 
         # Preserve recently_viewed order using Case/When
-        viewed_ids = self.request.session.get('recently_viewed_items', [])
-        if viewed_ids:
-            ordering = Case(*[When(id=pk, then=pos) for pos, pk in enumerate(viewed_ids)])
-            context['recently_viewed'] = (
-                Item.objects.filter(id__in=viewed_ids)
-                .prefetch_related('images')
-                .order_by(ordering)
-            )
-        else:
-            context['recently_viewed'] = Item.objects.none()
+        context['recently_viewed'] = get_recently_viewed_queryset(self.request)
 
         # Visit history for display (sessions + cookies)
         context['visit_history'] = self.request.session.get('visit_history', {})

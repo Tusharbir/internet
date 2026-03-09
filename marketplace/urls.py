@@ -13,6 +13,7 @@ urlpatterns = [
     path('register/', views.RegisterView.as_view(), name='register'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/', views.ProfileUpdateView.as_view(), name='profile_edit'),
+    path('history/', views.HistoryView.as_view(), name='history'),
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
     path('admin-panel/', views.AdminDashboardView.as_view(), name='admin_dashboard'),
     path('admin-panel/items/', views.AdminItemListView.as_view(), name='admin_items'),

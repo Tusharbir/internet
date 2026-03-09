@@ -240,6 +240,53 @@ class ProfileViewTests(TestCase):
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class HistoryViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='historyuser',
+            password='testpass123',
+            university_email='historyuser@uwindsor.ca',
+        )
+        self.category = Category.objects.create(name='History Category', slug='history-category')
+        self.item = Item.objects.create(
+            seller=self.user,
+            category=self.category,
+            title='History Listing',
+            description='Listing used for history page checks.',
+            price=Decimal('25.00'),
+            condition=Item.CONDITION_GOOD,
+            status=Item.STATUS_PUBLISHED,
+        )
+
+    def test_history_requires_login(self):
+        response = self.client.get(reverse('marketplace:history'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('login'), response.url)
+
+    def test_history_page_loads_with_activity_summary(self):
+        self.client.force_login(self.user)
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
+
+        response = self.client.get(reverse('marketplace:history'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'History')
+        self.assertContains(response, 'Session Visit Count')
+        self.assertContains(response, 'Recently Viewed Listings')
+        self.assertEqual(response.context['visit_count'], 2)
+        self.assertEqual(response.context['recently_viewed_count'], 1)
+
+    def test_history_page_shows_recently_viewed_item(self):
+        self.client.force_login(self.user)
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
+
+        response = self.client.get(reverse('marketplace:history'))
+
+        self.assertContains(response, 'History Listing')
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
 class LandingViewTests(TestCase):
     def test_landing_loads(self):
         response = self.client.get(reverse('marketplace:landing'))
