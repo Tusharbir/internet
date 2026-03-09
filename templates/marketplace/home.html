@@ -3,6 +3,7 @@
 
 {% block title %}UniTrade | Browse{% endblock %}
 
+  <!-- Latest Listings -->
 {% block content %}
   <div class="row g-4">
     <div class="col-lg-3">
@@ -52,6 +53,7 @@
       {% endif %}
     </div>
 
+      <!-- Lastest Listings  -->
     <div class="col-lg-9">
       <h2 class="mb-3 section-title">Latest listings</h2>
       <div class="row g-4">
@@ -89,6 +91,8 @@
           </div>
         {% endfor %}
       </div>
+
+      <!-- Pagination -->
 
       {% if is_paginated %}
         <nav class="mt-4">
