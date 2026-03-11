@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.contrib.auth import login
@@ -59,6 +59,15 @@ def build_message_threads(user, item_id=None):
         if message.recipient_id == user.id and not message.is_read:
             threads[key]['unread_count'] += 1
     return list(threads.values())
+
+
+def parse_session_datetime(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
 
 
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -239,6 +248,13 @@ class ItemDetailView(DetailView):
             messages.error(request, 'This listing is not available.')
             return redirect('marketplace:browse')
 
+        current_visit_at = timezone.now()
+        previous_visit_at = request.session.get('current_visit_at')
+        request.session['visit_count'] = int(request.session.get('visit_count', 0)) + 1
+        if previous_visit_at:
+            request.session['last_visit_at'] = previous_visit_at
+        request.session['current_visit_at'] = current_visit_at.isoformat()
+
         # Track recently viewed in session
         viewed = request.session.get('recently_viewed_items', [])
         if self.object.id in viewed:
@@ -247,7 +263,7 @@ class ItemDetailView(DetailView):
         request.session['recently_viewed_items'] = viewed[:8]
 
         # Track visit history for "visits per day" (session + cookie)
-        today = timezone.now().strftime('%Y-%m-%d')
+        today = current_visit_at.strftime('%Y-%m-%d')
         visit_history = request.session.get('visit_history', {})
         visit_history[today] = visit_history.get(today, 0) + 1
         request.session['visit_history'] = visit_history
@@ -377,6 +393,9 @@ class DashboardView(LoginRequiredMixin, ListView):
 
         # Visit history for display (sessions + cookies)
         context['visit_history'] = self.request.session.get('visit_history', {})
+        context['visit_count'] = int(self.request.session.get('visit_count', 0))
+        context['last_visit_at'] = parse_session_datetime(self.request.session.get('last_visit_at'))
+        context['current_visit_at'] = parse_session_datetime(self.request.session.get('current_visit_at'))
         context['recent_message_threads'] = build_message_threads(self.request.user)[:4]
         context['listing_counts'] = {
             'all': context['items'].count(),
