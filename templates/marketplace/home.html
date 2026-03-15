@@ -7,6 +7,7 @@
 {% block content %}
   <div class="row g-4">
     <div class="col-lg-3">
+      <div class="browse-filters-sticky d-flex flex-column gap-4">
       <div class="card shadow-sm">
         <div class="card-body">
           <h5 class="card-title">Search & Filters</h5>
@@ -51,6 +52,7 @@
           </div>
         </div>
       {% endif %}
+      </div>
     </div>
 
       <!-- Lastest Listings  -->
@@ -59,7 +61,7 @@
       <div class="row g-4">
         {% for item in items %}
           <div class="col-md-6 col-xl-4">
-            <div class="card h-100 shadow-sm">
+            <div class="card h-100 shadow-sm browse-listing-card{% if item.status == 'sold' %} browse-listing-card--sold{% endif %}">
               {% if item.images.first %}
                 <img src="{{ item.images.first.image.url }}" class="card-img-top" alt="{{ item.title }}">
               {% else %}
@@ -76,10 +78,10 @@
                   {{ item.category.name }} &bull; {{ item.get_condition_display }}
                 </p>
                 {% if item.status == 'sold' %}
-                  <span class="badge text-bg-dark mb-2" style="width:fit-content">Sold</span>
+                  <span class="badge text-bg-dark mb-2 badge-sold-pill" style="width:fit-content">Sold</span>
                 {% endif %}
                 <p class="card-text fw-semibold">${{ item.price|floatformat:2 }}</p>
-                <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-outline-primary btn-sm mt-auto" style="width:fit-content">
+                <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-outline-primary btn-sm mt-auto stretched-link" style="width:fit-content">
                   View details
                 </a>
               </div>
@@ -87,7 +89,12 @@
           </div>
         {% empty %}
           <div class="col-12">
-            <div class="alert alert-info">No items found. Try adjusting your filters or be the first to post!</div>
+            <div class="browse-empty-state">
+              <i class="bi bi-search" aria-hidden="true"></i>
+              <h3>No listings match your search</h3>
+              <p class="text-muted mb-3">Try widening your filters or clearing them to see more results.</p>
+              <a href="{% url 'marketplace:browse' %}" class="btn btn-outline-primary btn-sm">Clear all filters</a>
+            </div>
           </div>
         {% endfor %}
       </div>

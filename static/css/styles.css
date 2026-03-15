@@ -630,6 +630,77 @@ textarea.form-control {
   letter-spacing: 0.02em;
 }
 
+/* Browse: sticky filters on large screens */
+@media (min-width: 992px) {
+  .browse-filters-sticky {
+    position: sticky;
+    top: 100px;
+    align-self: flex-start;
+    z-index: 1;
+  }
+}
+
+/* Browse / favorites listing cards */
+.browse-listing-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .browse-listing-card {
+    transition: none;
+  }
+}
+
+.browse-listing-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 22px 44px rgba(31, 30, 27, 0.14);
+}
+
+.browse-listing-card .card-body {
+  position: relative;
+  z-index: 1;
+}
+
+.browse-listing-card--sold .card-img-top,
+.browse-listing-card--sold .card-img-top-placeholder {
+  filter: grayscale(0.7);
+  opacity: 0.9;
+}
+
+.badge-sold-pill {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.browse-empty-state {
+  padding: 2.5rem 1.75rem;
+  border: 1px dashed rgba(31, 30, 27, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.65);
+  text-align: center;
+}
+
+.browse-empty-state i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  margin-bottom: 1rem;
+  border-radius: 999px;
+  background: rgba(198, 161, 91, 0.18);
+  color: var(--ut-charcoal);
+  font-size: 1.5rem;
+}
+
+.browse-empty-state h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
 /* Pagination */
 .pagination .page-link {
   color: var(--ut-charcoal);
