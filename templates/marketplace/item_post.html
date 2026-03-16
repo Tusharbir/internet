@@ -3,114 +3,159 @@
 {% block title %}Post Ad | UniTrade{% endblock %}
 
 {% block content %}
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card shadow-sm">
+  <div class="row justify-content-center g-4">
+    <div class="col-xl-8">
+      <div class="card shadow-sm listing-form-card">
         <div class="card-body">
-          <h3 class="card-title mb-3">Post a new listing</h3>
-          <p class="text-muted">Create a campus listing with clear details, pricing, and at least one image.</p>
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
+            <div>
+              <span class="listing-form-kicker">Seller Form</span>
+              <h3 class="card-title mb-2">Post a new listing</h3>
+              <p class="text-muted mb-0">Create a campus listing with clear details, pricing, and at least one image.</p>
+            </div>
+            <a href="{% url 'marketplace:dashboard' %}" class="btn btn-outline-secondary">Back to dashboard</a>
+          </div>
           <form method="post" enctype="multipart/form-data" class="vstack gap-3" id="post-ad-form">
             {% csrf_token %}
             {% if form.non_field_errors %}
               <div class="alert alert-danger">
-                {% for error in form.non_field_errors %}
+                {% for error in form.non_field_errors %} 
                   <p class="mb-0">{{ error }}</p>
-                {% endfor %}
-              </div>
+                {% endfor %} 
+              </div> 
             {% endif %}
-            <div>
-              {{ form.title.label_tag }}
-              {{ form.title }}
-              {% if form.title.help_text %}<div class="form-text">{{ form.title.help_text }}</div>{% endif %}
-              {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors.0 }}</div>{% endif %}
+
+            <div class="listing-form-section">
+              <h5 class="mb-3">Listing details</h5>
+              <div>
+                {{ form.title.label_tag }}
+                {{ form.title }}
+                {% if form.title.help_text %}<div class="form-text">{{ form.title.help_text }}</div>{% endif %}
+                {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="mt-3">
+                {{ form.description.label_tag }}
+                {{ form.description }}
+                {% if form.description.help_text %}<div class="form-text">{{ form.description.help_text }}</div>{% endif %}
+                {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
+              </div>
             </div>
-            <div>
-              {{ form.description.label_tag }}
-              {{ form.description }}
-              {% if form.description.help_text %}<div class="form-text">{{ form.description.help_text }}</div>{% endif %}
-              {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
-            </div>
-            <div class="row g-3">
-              <div class="col-md-6">
-                {{ form.price.label_tag }}
-                <div class="input-group">
-                  <span class="input-group-text">$</span>
-                  {{ form.price }}
+
+            <div class="listing-form-section">
+              <h5 class="mb-3">Pricing and category</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  {{ form.price.label_tag }}
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    {{ form.price }}
+                  </div>
+                  {% if form.price.help_text %}<div class="form-text">{{ form.price.help_text }}</div>{% endif %}
+                  {% if form.price.errors %}<div class="text-danger small">{{ form.price.errors.0 }}</div>{% endif %}
                 </div>
-                {% if form.price.help_text %}<div class="form-text">{{ form.price.help_text }}</div>{% endif %}
-                {% if form.price.errors %}<div class="text-danger small">{{ form.price.errors.0 }}</div>{% endif %}
+                <div class="col-md-6">
+                  {{ form.condition.label_tag }}
+                  {{ form.condition }}
+                  {% if form.condition.errors %}<div class="text-danger small">{{ form.condition.errors.0 }}</div>{% endif %}
+                </div>
               </div>
-              <div class="col-md-6">
-                {{ form.condition.label_tag }}
-                {{ form.condition }}
-                {% if form.condition.errors %}<div class="text-danger small">{{ form.condition.errors.0 }}</div>{% endif %}
-              </div>
-            </div>
-            <div>
-              {{ form.category.label_tag }}
-              {{ form.category }}
-              {% if form.category.errors %}<div class="text-danger small">{{ form.category.errors.0 }}</div>{% endif %}
-            </div>
-            <div class="row g-3">
-              <div class="col-md-6">
-                {{ form.location.label_tag }}
-                {{ form.location }}
-                {% if form.location.help_text %}<div class="form-text">{{ form.location.help_text }}</div>{% endif %}
-                {% if form.location.errors %}<div class="text-danger small">{{ form.location.errors.0 }}</div>{% endif %}
-              </div>
-              <div class="col-md-6">
-                {{ form.status.label_tag }}
-                {{ form.status }}
-                {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors.0 }}</div>{% endif %}
+              <div class="mt-3">
+                {{ form.category.label_tag }}
+                {{ form.category }}
+                {% if form.category.errors %}<div class="text-danger small">{{ form.category.errors.0 }}</div>{% endif %}
               </div>
             </div>
-            <div class="form-check form-switch">
-              {{ form.negotiable }}
-              <label class="form-check-label" for="{{ form.negotiable.id_for_label }}">
-                Negotiable
-              </label>
+
+            <div class="listing-form-section">
+              <h5 class="mb-3">Availability</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  {{ form.location.label_tag }}
+                  {{ form.location }}
+                  {% if form.location.help_text %}<div class="form-text">{{ form.location.help_text }}</div>{% endif %}
+                  {% if form.location.errors %}<div class="text-danger small">{{ form.location.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                  {{ form.status.label_tag }}
+                  {{ form.status }}
+                  {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors.0 }}</div>{% endif %}
+                </div>
+              </div>
+              <div class="form-check form-switch mt-3">
+                {{ form.negotiable }}
+                <label class="form-check-label" for="{{ form.negotiable.id_for_label }}">
+                  Negotiable
+                </label>
+              </div>
             </div>
-            <div>
-              <label class="form-label fw-semibold">Images</label>
-              {{ form.images }}
-              <div class="form-text">{{ form.images.help_text }}</div>
-              {% if form.images.errors %}<div class="text-danger small">{{ form.images.errors.0 }}</div>{% endif %}
+
+            <div class="listing-form-section">
+              <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                <div>
+                  <h5 class="mb-1">Images</h5>
+                  <p class="text-muted small mb-0">Upload clear photos so buyers can trust what they see.</p>
+                </div>
+                <span class="badge rounded-pill text-bg-light">1 to 6 images</span>
+              </div>
+              <div class="listing-upload-panel">
+                <label class="form-label fw-semibold">Images</label>
+                {{ form.images }}
+                <div class="form-text">{{ form.images.help_text }}</div>
+                {% if form.images.errors %}<div class="text-danger small">{{ form.images.errors.0 }}</div>{% endif %}
+              </div>
+
             </div>
             <div id="image-preview" class="row g-2"></div>
             <div class="d-flex flex-wrap gap-2">
               <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save listing</button>
-              <a href="{% url 'marketplace:dashboard' %}" class="btn btn-outline-secondary">Back to dashboard</a>
+              <a href="{% url 'marketplace:dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
             </div>
           </form>
+        </div>
+      </div> 
+          <div class="listing-tip">
+            <i class="bi bi-camera"></i>
+            <div>
+              <strong>Show the real condition</strong>
+              <p class="mb-0 text-muted small">Bright, simple images help buyers trust the listing and reduce back-and-forth questions.</p>
+            </div>
+          </div>
+          <div class="listing-tip">
+            <i class="bi bi-geo-alt"></i>
+            <div>
+              <strong>Set a clear meetup spot</strong>
+              <p class="mb-0 text-muted small">Use a familiar campus location so buyers know where pickup can happen.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} 
+ 
+{% block extra_js %} 
   <script>
-    const input = document.getElementById("id_images");
+    const input = document.getElementById("id_images"); 
     const preview = document.getElementById("image-preview");
-    if (input) {
+    if (input) { 
       input.addEventListener("change", () => {
         preview.innerHTML = "";
-        const files = Array.from(input.files).slice(0, 6);
-        files.forEach((file) => {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const col = document.createElement("div");
+        const files = Array.from(input.files).slice(0, 6); 
+        files.forEach((file) => { 
+          const reader = new FileReader();  
+          reader.onload = (event) => { 
+            const col = document.createElement("div"); 
             col.className = "col-4 col-md-3";
-            col.innerHTML = `
+            col.innerHTML = `  
               <div class="border rounded-3 p-1 bg-white text-center">
                 <img src="${event.target.result}" alt="Preview" class="img-fluid rounded" style="height:100px;object-fit:cover;width:100%;">
                 <small class="text-muted d-block mt-1">${file.name.substring(0,20)}</small>
-              </div>`;
-            preview.appendChild(col);
-          };
-          reader.readAsDataURL(file);
-        });
-      });
+              </div>`; 
+            preview.appendChild(col);   
+          }; 
+          reader.readAsDataURL(file); 
+        }); 
+      }); 
     }
-  </script>
+  </script>  
 {% endblock %}

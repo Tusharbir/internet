@@ -1,9 +1,10 @@
 from datetime import timedelta
 from pathlib import Path
 
-from django.conf import settings
 from django.core.files.base import ContentFile
+from django.core.files import File
 from django.core.management.base import BaseCommand
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
@@ -189,32 +190,50 @@ class Command(BaseCommand):
             b"\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44"
             b"\x01\x00\x3b"
         )
-        media_items_dir = Path(settings.MEDIA_ROOT) / "items"
-        preferred_images = [
-            path for path in media_items_dir.iterdir()
-            if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}
-        ] if media_items_dir.exists() else []
+        media_root = Path(settings.MEDIA_ROOT)
+        generated_map = {
+            "MacBook Air M2": media_root / "items" / "generated_clean" / "macbook-air-m2.png",
+            "Algorithms Textbook": media_root / "items" / "generated_clean" / "algorithms-textbook.png",
+            "Standing Desk": media_root / "items" / "generated_clean" / "standing-desk.png",
+            "PS5 Bundle": media_root / "items" / "generated_clean" / "ps5-bundle.png",
+            "Winter Jacket": media_root / "items" / "generated_clean" / "winter-jacket.png",
+            "Blender": media_root / "items" / "generated_clean" / "blender.png",
+        }
+        candidate_dirs = [media_root / "items", media_root / "items" / "items"]
+        real_image_paths = []
+        for directory in candidate_dirs:
+            if directory.exists():
+                for path in sorted(directory.iterdir()):
+                    if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}:
+                        if "generated" in path.parts:
+                            continue
+                        real_image_paths.append(path)
 
-        for index, item in enumerate(items):
-            existing_images = list(item.images.all())
-            has_real_image = any(Path(image.image.name).suffix.lower() != ".gif" for image in existing_images)
-            if has_real_image:
+        for item in items:
+            current_images = list(item.images.all())
+            if current_images and not any(img.image.name.endswith('.gif') for img in current_images):
                 continue
+            for existing in current_images:
+                existing.image.delete(save=False)
+                existing.delete()
 
-            if existing_images:
-                for image in existing_images:
-                    image.image.delete(save=False)
-                    image.delete()
+            source_path = generated_map.get(item.title)
+            if source_path and not source_path.exists():
+                source_path = None
 
-            img = ItemImage(item=item)
-            if preferred_images:
-                source = preferred_images[index % len(preferred_images)]
-                img.image.save(
-                    f"items/demo_{item.pk}{source.suffix.lower()}",
-                    ContentFile(source.read_bytes()),
-                    save=True,
-                )
+            if real_image_paths:
+                source_path = source_path or real_image_paths[(item.pk - 1) % len(real_image_paths)]
+
+            if source_path:
+                with source_path.open("rb") as image_file:
+                    img = ItemImage(item=item)
+                    img.image.save(
+                        f"items/demo_{item.pk}{source_path.suffix.lower()}",
+                        File(image_file),
+                        save=True,
+                    )
             else:
+                img = ItemImage(item=item)
                 img.image.save(f"items/{item.pk}_1.gif", ContentFile(tiny_gif), save=True)
 
     def _create_messages(self, users, items):

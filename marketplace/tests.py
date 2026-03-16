@@ -99,6 +99,7 @@ class AuthViewTests(TestCase):
             'first_name': 'Test',
             'last_name': 'User',
             'email': 'new@uwindsor.ca',
+            'university_email': 'new@uwindsor.ca',
             'password1': 'Str0ngP@ss!',
             'password2': 'Str0ngP@ss!',
         })
@@ -114,6 +115,7 @@ class AuthViewTests(TestCase):
             'first_name': 'Test',
             'last_name': 'User',
             'email': 'taken@example.com',
+            'university_email': 'taken@uwindsor.ca',
             'password1': 'Str0ngP@ss!',
             'password2': 'Str0ngP@ss!',
         })
@@ -160,6 +162,128 @@ class AuthViewTests(TestCase):
 
         self.assertRedirects(response, reverse('marketplace:landing'))
         self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_password_reset_page_loads(self):
+        response = self.client.get(reverse('password_reset'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Reset your password')
+
+    def test_logged_in_navbar_shows_profile_link(self):
+        user = User.objects.create_user(username='profileowner', password='testpass123')
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('marketplace:browse'))
+
+        self.assertContains(response, reverse('marketplace:profile'))
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class ProfileViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='member',
+            password='testpass123',
+            email='member@uwindsor.ca',
+            university_email='member@uwindsor.ca',
+            first_name='Member',
+            last_name='User',
+            student_id='00112233',
+        )
+
+    def test_profile_requires_login(self):
+        response = self.client.get(reverse('marketplace:profile'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('login'), response.url)
+
+    def test_profile_page_loads_for_logged_in_user(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('marketplace:profile'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'My Profile')
+        self.assertContains(response, 'member@uwindsor.ca')
+        self.assertContains(response, '00112233')
+
+    def test_profile_edit_updates_user_details(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('marketplace:profile_edit'), {
+            'first_name': 'Kunal',
+            'last_name': 'Rastogi',
+            'email': 'kunal@uwindsor.ca',
+            'university_email': 'kunal@uwindsor.ca',
+            'student_id': '99887766',
+        })
+
+        self.assertRedirects(response, reverse('marketplace:profile'))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Kunal')
+        self.assertEqual(self.user.last_name, 'Rastogi')
+        self.assertEqual(self.user.email, 'kunal@uwindsor.ca')
+        self.assertEqual(self.user.university_email, 'kunal@uwindsor.ca')
+        self.assertEqual(self.user.student_id, '99887766')
+
+    def test_profile_edit_rejects_non_uwindsor_university_email(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('marketplace:profile_edit'), {
+            'first_name': 'Member',
+            'last_name': 'User',
+            'email': 'member@example.com',
+            'university_email': 'member@example.com',
+            'student_id': '00112233',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Please use your @uwindsor.ca email address.')
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class HistoryViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='historyuser',
+            password='testpass123',
+            university_email='historyuser@uwindsor.ca',
+        )
+        self.category = Category.objects.create(name='History Category', slug='history-category')
+        self.item = Item.objects.create(
+            seller=self.user,
+            category=self.category,
+            title='History Listing',
+            description='Listing used for history page checks.',
+            price=Decimal('25.00'),
+            condition=Item.CONDITION_GOOD,
+            status=Item.STATUS_PUBLISHED,
+        )
+
+    def test_history_requires_login(self):
+        response = self.client.get(reverse('marketplace:history'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('login'), response.url)
+
+    def test_history_page_loads_with_activity_summary(self):
+        self.client.force_login(self.user)
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
+
+        response = self.client.get(reverse('marketplace:history'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'History')
+        self.assertContains(response, 'Session Visit Count')
+        self.assertContains(response, 'Recently Viewed Listings')
+        self.assertEqual(response.context['visit_count'], 2)
+        self.assertEqual(response.context['recently_viewed_count'], 1)
+
+    def test_history_page_shows_recently_viewed_item(self):
+        self.client.force_login(self.user)
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
+
+        response = self.client.get(reverse('marketplace:history'))
+
+        self.assertContains(response, 'History Listing')
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
@@ -285,9 +409,27 @@ class ItemDetailViewTests(TestCase):
         session = self.client.session
         self.assertIn('visit_history', session)
 
+    def test_visit_count_increments(self):
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
+
+        session = self.client.session
+
+        self.assertEqual(session['visit_count'], 2)
+
     def test_last_viewed_cookie(self):
         response = self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
         self.assertEqual(response.cookies['last_viewed_item'].value, str(self.item.pk))
+
+    def test_last_visit_timestamp_is_tracked_after_second_visit(self):
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
+        first_current = self.client.session.get('current_visit_at')
+
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
+        session = self.client.session
+
+        self.assertEqual(session.get('last_visit_at'), first_current)
+        self.assertIn('current_visit_at', session)
 
     def test_detail_shows_placeholder_when_listing_has_no_image(self):
         response = self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
@@ -780,6 +922,21 @@ class DashboardViewTests(TestCase):
         self.assertEqual(response.context['listing_counts']['draft'], 1)
         self.assertEqual(response.context['listing_counts']['published'], 1)
         self.assertEqual(response.context['listing_counts']['sold'], 1)
+
+    def test_dashboard_exposes_session_activity_summary(self):
+        item = Item.objects.create(
+            seller=self.user, category=self.cat,
+            title='Viewed Item', description='Viewed listing used for activity summary checks.',
+            price=Decimal('14.00'), condition=Item.CONDITION_GOOD,
+            status=Item.STATUS_PUBLISHED,
+        )
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': item.pk}))
+        self.client.get(reverse('marketplace:item_detail', kwargs={'pk': item.pk}))
+
+        response = self.client.get(reverse('marketplace:dashboard'))
+
+        self.assertEqual(response.context['visit_count'], 2)
+        self.assertIsNotNone(response.context['current_visit_at'])
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)

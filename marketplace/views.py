@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.contrib.auth import login
@@ -27,10 +27,11 @@ from .forms import (
     MessageForm,
     ReportForm,
     UserRegistrationForm,
+    UserProfileForm,
 )
 from .models import Category, Favorite, Item, ItemImage, Message, Report, User
 
-
+# message threads 
 def build_message_threads(user, item_id=None):
     queryset = (
         Message.objects.filter(Q(sender=user) | Q(recipient=user))
@@ -58,6 +59,27 @@ def build_message_threads(user, item_id=None):
         if message.recipient_id == user.id and not message.is_read:
             threads[key]['unread_count'] += 1
     return list(threads.values())
+
+
+def parse_session_datetime(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def get_recently_viewed_queryset(request):
+    viewed_ids = request.session.get('recently_viewed_items', [])
+    if not viewed_ids:
+        return Item.objects.none()
+    ordering = Case(*[When(id=pk, then=pos) for pos, pk in enumerate(viewed_ids)])
+    return (
+        Item.objects.filter(id__in=viewed_ids)
+        .prefetch_related('images')
+        .order_by(ordering)
+    )
 
 
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -102,7 +124,7 @@ class AdminPanelContextMixin:
             'marketplace:admin_dashboard'
         )
 
-
+# register view
 class RegisterView(FormView):
     template_name = 'registration/register.html'
     form_class = UserRegistrationForm
@@ -132,6 +154,44 @@ class UserLoginView(LoginView):
             return reverse('marketplace:admin_dashboard')
         return reverse('marketplace:browse')
 
+#landing view
+
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'marketplace/profile.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['profile_user'] = self.request.user
+        return context
+
+
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+    model = User
+    form_class = UserProfileForm
+    template_name = 'marketplace/profile_edit.html'
+    success_url = reverse_lazy('marketplace:profile')
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Your profile was updated successfully.')
+        return super().form_valid(form)
+
+
+class HistoryView(LoginRequiredMixin, TemplateView):
+    template_name = 'marketplace/history.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['visit_count'] = int(self.request.session.get('visit_count', 0))
+        context['last_visit_at'] = parse_session_datetime(self.request.session.get('last_visit_at'))
+        context['current_visit_at'] = parse_session_datetime(self.request.session.get('current_visit_at'))
+        context['visit_history'] = self.request.session.get('visit_history', {})
+        context['recently_viewed'] = get_recently_viewed_queryset(self.request)
+        context['recently_viewed_count'] = context['recently_viewed'].count()
+        return context
+
 
 class LandingView(TemplateView):
     template_name = 'landing.html'
@@ -146,7 +206,7 @@ class LandingView(TemplateView):
         )
         return context
 
-
+#browse view with filters, sorting, and pagination
 class BrowseListView(ListView):
     model = Item
     template_name = 'marketplace/home.html'
@@ -215,6 +275,13 @@ class ItemDetailView(DetailView):
             messages.error(request, 'This listing is not available.')
             return redirect('marketplace:browse')
 
+        current_visit_at = timezone.now()
+        previous_visit_at = request.session.get('current_visit_at')
+        request.session['visit_count'] = int(request.session.get('visit_count', 0)) + 1
+        if previous_visit_at:
+            request.session['last_visit_at'] = previous_visit_at
+        request.session['current_visit_at'] = current_visit_at.isoformat()
+
         # Track recently viewed in session
         viewed = request.session.get('recently_viewed_items', [])
         if self.object.id in viewed:
@@ -223,7 +290,7 @@ class ItemDetailView(DetailView):
         request.session['recently_viewed_items'] = viewed[:8]
 
         # Track visit history for "visits per day" (session + cookie)
-        today = timezone.now().strftime('%Y-%m-%d')
+        today = current_visit_at.strftime('%Y-%m-%d')
         visit_history = request.session.get('visit_history', {})
         visit_history[today] = visit_history.get(today, 0) + 1
         request.session['visit_history'] = visit_history
@@ -340,19 +407,13 @@ class DashboardView(LoginRequiredMixin, ListView):
         ).prefetch_related('images')
 
         # Preserve recently_viewed order using Case/When
-        viewed_ids = self.request.session.get('recently_viewed_items', [])
-        if viewed_ids:
-            ordering = Case(*[When(id=pk, then=pos) for pos, pk in enumerate(viewed_ids)])
-            context['recently_viewed'] = (
-                Item.objects.filter(id__in=viewed_ids)
-                .prefetch_related('images')
-                .order_by(ordering)
-            )
-        else:
-            context['recently_viewed'] = Item.objects.none()
+        context['recently_viewed'] = get_recently_viewed_queryset(self.request)
 
         # Visit history for display (sessions + cookies)
         context['visit_history'] = self.request.session.get('visit_history', {})
+        context['visit_count'] = int(self.request.session.get('visit_count', 0))
+        context['last_visit_at'] = parse_session_datetime(self.request.session.get('last_visit_at'))
+        context['current_visit_at'] = parse_session_datetime(self.request.session.get('current_visit_at'))
         context['recent_message_threads'] = build_message_threads(self.request.user)[:4]
         context['listing_counts'] = {
             'all': context['items'].count(),

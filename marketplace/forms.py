@@ -7,6 +7,42 @@ from django.utils.text import slugify
 from .models import Category, Item, Message, Report, User
 
 
+# report form
+class ReportForm(forms.ModelForm):
+    class Meta:
+        model = Report
+        fields = ['reason', 'comment']
+        widgets = {
+            'comment': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Optional details...'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name == 'reason':
+                field.widget.attrs.setdefault('class', 'form-select')
+                field.widget.attrs.setdefault('autocomplete', 'off')
+            else:
+                field.widget.attrs.setdefault('class', 'form-control')
+                field.widget.attrs.setdefault('autocomplete', 'off')
+
+
+# multiple fil input and field to handle multiple image uploads 
+class MultiFileInput(forms.FileInput):
+    allow_multiple_selected = True
+
+    def value_from_datadict(self, data, files, name):
+        if hasattr(files, 'getlist'):
+            upload = files.getlist(name)
+        else:
+            upload = files.get(name)
+            if upload:
+                upload = [upload]
+            else:
+                upload = []
+        return upload if upload else []
+    
+# user registration form 
 class UserRegistrationForm(UserCreationForm):
     university_email = forms.EmailField(required=True, help_text='Use your @uwindsor.ca email.')
     student_id = forms.CharField(required=False)
@@ -32,6 +68,31 @@ class UserRegistrationForm(UserCreationForm):
                 field.widget.attrs.setdefault('autocomplete', 'new-password')
             elif field_name == 'username':
                 field.widget.attrs.setdefault('autocomplete', 'username')
+            else:
+                field.widget.attrs.setdefault('autocomplete', 'off')
+
+    def clean_university_email(self):
+        email = (self.cleaned_data.get('university_email') or '').strip().lower()
+        if not email:
+            raise forms.ValidationError('University email is required.')
+        if not email.endswith('@uwindsor.ca'):
+            raise forms.ValidationError('Please use your @uwindsor.ca email address.')
+        return email
+
+
+class UserProfileForm(forms.ModelForm):
+    university_email = forms.EmailField(required=True, help_text='Use your @uwindsor.ca email.')
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email', 'university_email', 'student_id')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.setdefault('class', 'form-control')
+            if field_name == 'email':
+                field.widget.attrs.setdefault('autocomplete', 'email')
             else:
                 field.widget.attrs.setdefault('autocomplete', 'off')
 
@@ -137,89 +198,89 @@ class ItemForm(forms.ModelForm):
             raise forms.ValidationError('Description must be at least 20 characters.')
         return description
 
-    def clean_price(self):
-        price = self.cleaned_data['price']
-        if price is not None and price < 0:
-            raise forms.ValidationError('Price must be zero or greater.')
-        return price
-
-    def clean_images(self):
-        images = self.cleaned_data.get('images') or []
-        allowed_types = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
-        allowed_extensions = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
-        for img in images:
-            extension = Path(img.name).suffix.lower()
-            if extension not in allowed_extensions:
-                raise forms.ValidationError(
-                    f'"{img.name}" has an unsupported file extension. Allowed: JPG, PNG, WebP, GIF.'
-                )
-            if img.content_type not in allowed_types:
-                raise forms.ValidationError(
-                    f'"{img.name}" is not a valid image. Allowed: JPG, PNG, WebP, GIF.'
-                )
-            if img.size > 5 * 1024 * 1024:
-                raise forms.ValidationError(
-                    f'"{img.name}" exceeds the 5 MB limit.'
-                )
-        return images
-
-    def clean(self):
-        cleaned_data = super().clean()
-        images = cleaned_data.get('images') or []
-        delete_ids = self.cleaned_data.get('delete_images', '')
-        delete_count = 0
-        if delete_ids:
-            raw_ids = [x.strip() for x in delete_ids.split(',') if x.strip()]
-            if not all(item_id.isdigit() for item_id in raw_ids):
-                raise forms.ValidationError('One or more selected images could not be removed.')
-            delete_count = len(raw_ids)
-
-        if self.instance.pk:
-            existing_count = max(self.instance.images.count() - delete_count, 0)
+    def clean_price(self): 
+        price = self.cleaned_data['price'] 
+        if price is not None and price < 0: 
+            raise forms.ValidationError('Price must be zero or greater.') 
+        return price 
+ 
+    def clean_images(self): 
+        images = self.cleaned_data.get('images') or [] 
+        allowed_types = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'} 
+        allowed_extensions = {'.jpg', '.jpeg', '.png', '.webp', '.gif'} 
+        for img in images: 
+            extension = Path(img.name).suffix.lower() 
+            if extension not in allowed_extensions: 
+                raise forms.ValidationError( 
+                    f'"{img.name}" has an unsupported file extension. Allowed: JPG, PNG, WebP, GIF.' 
+                ) 
+            if img.content_type not in allowed_types: 
+                raise forms.ValidationError( 
+                    f'"{img.name}" is not a valid image. Allowed: JPG, PNG, WebP, GIF.' 
+                ) 
+            if img.size > 5 * 1024 * 1024: 
+                raise forms.ValidationError( 
+                    f'"{img.name}" exceeds the 5 MB limit.' 
+                ) 
+        return images 
+ 
+    def clean(self): 
+        cleaned_data = super().clean() 
+        images = cleaned_data.get('images') or [] 
+        delete_ids = self.cleaned_data.get('delete_images', '') 
+        delete_count = 0 
+        if delete_ids: 
+            raw_ids = [x.strip() for x in delete_ids.split(',') if x.strip()] 
+            if not all(item_id.isdigit() for item_id in raw_ids): 
+                raise forms.ValidationError('One or more selected images could not be removed.') 
+            delete_count = len(raw_ids) 
+ 
+        if self.instance.pk: 
+            existing_count = max(self.instance.images.count() - delete_count, 0) 
         else:
-            existing_count = 0
+            existing_count = 0 
 
-        total_images = len(images) + existing_count
+        total_images = len(images) + existing_count 
         if total_images == 0:
-            raise forms.ValidationError('Please upload at least 1 image.')
+            raise forms.ValidationError('Please upload at least 1 image.') 
         if total_images > 6:
-            raise forms.ValidationError('You can only have up to 6 images per listing.')
+            raise forms.ValidationError('You can only have up to 6 images per listing.') 
         return cleaned_data
+ 
 
-
-class ItemFilterForm(forms.Form):
+class ItemFilterForm(forms.Form): 
     q = forms.CharField(required=False, label='Search')
-    category = forms.ModelChoiceField(queryset=None, required=False)
+    category = forms.ModelChoiceField(queryset=None, required=False) 
     condition = forms.ChoiceField(
-        choices=[('', 'Any condition')] + Item.CONDITION_CHOICES,
+        choices=[('', 'Any condition')] + Item.CONDITION_CHOICES, 
         required=False,
-    )
+    ) 
     min_price = forms.DecimalField(required=False, min_value=0, decimal_places=2)
-    max_price = forms.DecimalField(required=False, min_value=0, decimal_places=2)
+    max_price = forms.DecimalField(required=False, min_value=0, decimal_places=2) 
     sort = forms.ChoiceField(
-        choices=[
+        choices=[  
             ('newest', 'Newest'),
-            ('price_low', 'Lowest price'),
+            ('price_low', 'Lowest price'), 
             ('price_high', 'Highest price'),
-        ],
+        ], 
         required=False,
-    )
+    ) 
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs): 
         categories = kwargs.pop('categories', None)
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs) 
         if categories is not None:
-            self.fields['category'].queryset = categories
+            self.fields['category'].queryset = categories 
         for field_name, field in self.fields.items():
-            if field_name in {'category', 'condition', 'sort'}:
+            if field_name in {'category', 'condition', 'sort'}: 
                 field.widget.attrs.setdefault('class', 'form-select')
-            else:
+            else: 
                 field.widget.attrs.setdefault('class', 'form-control')
+ 
 
-
-class MessageForm(forms.ModelForm):
-    class Meta:
-        model = Message
+class MessageForm(forms.ModelForm): 
+    class Meta: 
+        model = Message 
         fields = ['body']
         widgets = {
             'body': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Write your message...'}),
@@ -231,26 +292,7 @@ class MessageForm(forms.ModelForm):
             field.widget.attrs.setdefault('class', 'form-control')
             field.widget.attrs.setdefault('autocomplete', 'off')
 
-
-class ReportForm(forms.ModelForm):
-    class Meta:
-        model = Report
-        fields = ['reason', 'comment']
-        widgets = {
-            'comment': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Optional details...'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field_name, field in self.fields.items():
-            if field_name == 'reason':
-                field.widget.attrs.setdefault('class', 'form-select')
-                field.widget.attrs.setdefault('autocomplete', 'off')
-            else:
-                field.widget.attrs.setdefault('class', 'form-control')
-                field.widget.attrs.setdefault('autocomplete', 'off')
-
-
+# admin filter forms for items, reports, users, and messages
 class AdminItemFilterForm(forms.Form):
     q = forms.CharField(required=False, label='Search')
     status = forms.ChoiceField(
@@ -266,18 +308,6 @@ class AdminItemFilterForm(forms.Form):
         ],
         required=False,
     )
-
-    def __init__(self, *args, **kwargs):
-        categories = kwargs.pop('categories', None)
-        super().__init__(*args, **kwargs)
-        if categories is not None:
-            self.fields['category'].queryset = categories
-        for field in self.fields.values():
-            if isinstance(field, forms.ModelChoiceField) or isinstance(field, forms.ChoiceField):
-                field.widget.attrs.setdefault('class', 'form-select')
-            else:
-                field.widget.attrs.setdefault('class', 'form-control')
-
 
 class AdminReportFilterForm(forms.Form):
     q = forms.CharField(required=False, label='Search')
@@ -297,6 +327,19 @@ class AdminReportFilterForm(forms.Form):
                 field.widget.attrs.setdefault('class', 'form-select')
             else:
                 field.widget.attrs.setdefault('class', 'form-control')
+
+    def __init__(self, *args, **kwargs):
+        categories = kwargs.pop('categories', None)
+        super().__init__(*args, **kwargs)
+        if categories is not None:
+            self.fields['category'].queryset = categories
+        for field in self.fields.values():
+            if isinstance(field, forms.ModelChoiceField) or isinstance(field, forms.ChoiceField):
+                field.widget.attrs.setdefault('class', 'form-select')
+            else:
+                field.widget.attrs.setdefault('class', 'form-control')
+
+
 
 
 class AdminUserFilterForm(forms.Form):
