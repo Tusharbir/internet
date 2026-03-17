@@ -1,8 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from django.forms.widgets import ClearableFileInput
+from django.utils.text import slugify
 
-from .models import Item, Message, Report, User
+from .models import Category, Item, Message, Report, User
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -25,33 +25,52 @@ class UserRegistrationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
-            if field_name == 'negotiable':
-                field.widget.attrs.setdefault('class', 'form-check-input')
-            elif field_name == 'status':
-                field.widget.attrs.setdefault('class', 'form-select')
+            field.widget.attrs.setdefault('class', 'form-control')
+            if field_name in {'password1', 'password2'}:
+                field.widget.attrs.setdefault('autocomplete', 'new-password')
+            elif field_name == 'username':
+                field.widget.attrs.setdefault('autocomplete', 'username')
             else:
-                field.widget.attrs.setdefault('class', 'form-control')
-        if 'status' in self.fields:
-            if self.instance.pk and self.instance.status == Item.STATUS_SOLD:
-                self.fields['status'].choices = [(Item.STATUS_SOLD, 'Sold')]
-                self.fields['status'].disabled = True
-            else:
-                self.fields['status'].choices = [
-                    (Item.STATUS_DRAFT, 'Draft'),
-                    (Item.STATUS_PUBLISHED, 'Published'),
-                ]
+                field.widget.attrs.setdefault('autocomplete', 'off')
 
 
-class MultiFileInput(ClearableFileInput):
+class MultiFileInput(forms.FileInput):
     allow_multiple_selected = True
+
+    def value_from_datadict(self, data, files, name):
+        if hasattr(files, 'getlist'):
+            upload = files.getlist(name)
+        else:
+            upload = files.get(name)
+            if upload:
+                upload = [upload]
+            else:
+                upload = []
+        return upload if upload else []
+
+
+class MultiFileField(forms.FileField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('widget', MultiFileInput(attrs={'multiple': True, 'accept': 'image/*'}))
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        if not data or data == []:
+            if self.required:
+                raise forms.ValidationError(self.error_messages['required'])
+            return []
+        result = []
+        for item in data:
+            result.append(super().clean(item, initial))
+        return result
 
 
 class ItemForm(forms.ModelForm):
-    images = forms.FileField(
+    images = MultiFileField(
         required=False,
-        widget=MultiFileInput(attrs={'multiple': True}),
-        help_text='You can upload multiple images.',
+        help_text='You can upload up to 6 images (JPG, PNG, WebP).',
     )
+    delete_images = forms.CharField(required=False, widget=forms.HiddenInput())
 
     class Meta:
         model = Item
@@ -65,6 +84,32 @@ class ItemForm(forms.ModelForm):
             'negotiable',
             'status',
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name == 'negotiable':
+                field.widget.attrs.setdefault('class', 'form-check-input')
+            elif field_name in ('status', 'condition', 'category'):
+                field.widget.attrs.setdefault('class', 'form-select')
+            elif field_name == 'delete_images':
+                pass
+            else:
+                field.widget.attrs.setdefault('class', 'form-control')
+
+        if self.instance.pk and self.instance.status == Item.STATUS_SOLD:
+            self.fields['status'].choices = [(Item.STATUS_SOLD, 'Sold')]
+            self.fields['status'].disabled = True
+        elif self.instance.pk:
+            self.fields['status'].choices = [
+                (Item.STATUS_DRAFT, 'Draft'),
+                (Item.STATUS_PUBLISHED, 'Published'),
+            ]
+        else:
+            self.fields['status'].choices = [
+                (Item.STATUS_DRAFT, 'Draft'),
+                (Item.STATUS_PUBLISHED, 'Published'),
+            ]
 
     def clean_title(self):
         title = self.cleaned_data['title'].strip()
@@ -84,26 +129,37 @@ class ItemForm(forms.ModelForm):
             raise forms.ValidationError('Price must be zero or greater.')
         return price
 
+    def clean_images(self):
+        images = self.cleaned_data.get('images') or []
+        allowed_types = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
+        for img in images:
+            if img.content_type not in allowed_types:
+                raise forms.ValidationError(
+                    f'"{img.name}" is not a valid image. Allowed: JPG, PNG, WebP, GIF.'
+                )
+            if img.size > 5 * 1024 * 1024:
+                raise forms.ValidationError(
+                    f'"{img.name}" exceeds the 5 MB limit.'
+                )
+        return images
+
     def clean(self):
         cleaned_data = super().clean()
-        images = self.files.getlist('images')
+        images = cleaned_data.get('images') or []
+        delete_ids = self.cleaned_data.get('delete_images', '')
+        delete_count = len([x for x in delete_ids.split(',') if x.strip()]) if delete_ids else 0
+
         if self.instance.pk:
-            has_existing = self.instance.images.exists()
+            existing_count = self.instance.images.count() - delete_count
         else:
-            has_existing = False
-        total_images = len(images) + (self.instance.images.count() if has_existing else 0)
-        if not images and not has_existing:
+            existing_count = 0
+
+        total_images = len(images) + existing_count
+        if total_images == 0:
             raise forms.ValidationError('Please upload at least 1 image.')
-        if images and not 1 <= len(images) <= 6:
-            raise forms.ValidationError('Please upload between 1 and 6 images.')
         if total_images > 6:
             raise forms.ValidationError('You can only have up to 6 images per listing.')
         return cleaned_data
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.widget.attrs.setdefault('class', 'form-control')
 
 
 class ItemFilterForm(forms.Form):
@@ -148,6 +204,7 @@ class MessageForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.setdefault('class', 'form-control')
+            field.widget.attrs.setdefault('autocomplete', 'off')
 
 
 class ReportForm(forms.ModelForm):
@@ -160,5 +217,121 @@ class ReportForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name == 'reason':
+                field.widget.attrs.setdefault('class', 'form-select')
+                field.widget.attrs.setdefault('autocomplete', 'off')
+            else:
+                field.widget.attrs.setdefault('class', 'form-control')
+                field.widget.attrs.setdefault('autocomplete', 'off')
+
+
+class AdminItemFilterForm(forms.Form):
+    q = forms.CharField(required=False, label='Search')
+    status = forms.ChoiceField(
+        choices=[('', 'All statuses')] + Item.STATUS_CHOICES,
+        required=False,
+    )
+    category = forms.ModelChoiceField(queryset=None, required=False, empty_label='All categories')
+    reported = forms.ChoiceField(
+        choices=[
+            ('', 'All listings'),
+            ('reported', 'Reported only'),
+            ('clean', 'No reports'),
+        ],
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        categories = kwargs.pop('categories', None)
+        super().__init__(*args, **kwargs)
+        if categories is not None:
+            self.fields['category'].queryset = categories
+        for field in self.fields.values():
+            if isinstance(field, forms.ModelChoiceField) or isinstance(field, forms.ChoiceField):
+                field.widget.attrs.setdefault('class', 'form-select')
+            else:
+                field.widget.attrs.setdefault('class', 'form-control')
+
+
+class AdminReportFilterForm(forms.Form):
+    q = forms.CharField(required=False, label='Search')
+    status = forms.ChoiceField(
+        choices=[('', 'All statuses')] + Report.STATUS_CHOICES,
+        required=False,
+    )
+    reason = forms.ChoiceField(
+        choices=[('', 'All reasons')] + Report.REASON_CHOICES,
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if isinstance(field, forms.ChoiceField):
+                field.widget.attrs.setdefault('class', 'form-select')
+            else:
+                field.widget.attrs.setdefault('class', 'form-control')
+
+
+class AdminUserFilterForm(forms.Form):
+    q = forms.CharField(required=False, label='Search')
+    role = forms.ChoiceField(
+        choices=[
+            ('', 'All users'),
+            ('staff', 'Staff only'),
+            ('member', 'Marketplace members'),
+            ('inactive', 'Inactive only'),
+        ],
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if isinstance(field, forms.ChoiceField):
+                field.widget.attrs.setdefault('class', 'form-select')
+            else:
+                field.widget.attrs.setdefault('class', 'form-control')
+
+
+class AdminMessageFilterForm(forms.Form):
+    q = forms.CharField(required=False, label='Search')
+    read_state = forms.ChoiceField(
+        choices=[
+            ('', 'All messages'),
+            ('unread', 'Unread only'),
+            ('read', 'Read only'),
+        ],
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if isinstance(field, forms.ChoiceField):
+                field.widget.attrs.setdefault('class', 'form-select')
+            else:
+                field.widget.attrs.setdefault('class', 'form-control')
+
+
+class CategoryAdminForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ['name', 'slug']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['slug'].required = False
         for field in self.fields.values():
             field.widget.attrs.setdefault('class', 'form-control')
+
+    def clean_name(self):
+        return self.cleaned_data['name'].strip()
+
+    def clean_slug(self):
+        slug = self.cleaned_data.get('slug', '').strip()
+        if slug:
+            return slug
+        name = self.cleaned_data.get('name', '')
+        return slugify(name)

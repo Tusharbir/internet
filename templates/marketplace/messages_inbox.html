@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Messages | UniTrade{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Messages</h2>
+      <p class="text-muted mb-0">
+        {% if selected_item %}
+          Conversations for <strong>{{ selected_item.title }}</strong>
+        {% else %}
+          Your buyer and seller conversations in one inbox.
+        {% endif %}
+      </p>
+    </div>
+    {% if selected_item %}
+      <a href="{% url 'marketplace:messages_inbox' %}" class="btn btn-outline-secondary">View all conversations</a>
+    {% endif %}
+  </div>
+
+  {% if unread_threads_count %}
+    <div class="alert alert-warning">
+      You have {{ unread_threads_count }} conversation{{ unread_threads_count|pluralize }} with unread messages.
+    </div>
+  {% endif %}
+
+  <div class="row g-4">
+    {% for thread in threads %}
+      <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+              <div>
+                <h5 class="mb-1">{{ thread.other_user.get_full_name|default:thread.other_user.username }}</h5>
+                <p class="text-muted small mb-1">Listing: {{ thread.item.title }}</p>
+                <p class="text-muted small mb-0">{{ thread.last_message.created_at|date:"M j, Y g:i A" }}</p>
+              </div>
+              {% if thread.unread_count %}
+                <span class="badge text-bg-danger">{{ thread.unread_count }} new</span>
+              {% endif %}
+            </div>
+            <p class="mb-3">{{ thread.last_message.body|truncatechars:120 }}</p>
+            <div class="d-flex gap-2">
+              <a href="{{ thread.thread_url }}" class="btn btn-primary btn-sm">Open thread</a>
+              <a href="{% url 'marketplace:item_detail' thread.item.pk %}" class="btn btn-outline-secondary btn-sm">View listing</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-info mb-0">
+          No conversations yet. Buyers can start a thread from any listing, and sellers will see replies here.
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

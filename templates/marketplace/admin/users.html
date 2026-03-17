@@ -1,0 +1,91 @@
+{% extends 'marketplace/admin/base.html' %}
+
+{% block admin_content %}
+  <div class="card border-0 mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3">
+        <div class="col-md-8">{{ filter_form.q.label_tag }}{{ filter_form.q }}</div>
+        <div class="col-md-4">{{ filter_form.role.label_tag }}{{ filter_form.role }}</div>
+        <div class="col-12 d-flex gap-2">
+          <button type="submit" class="btn btn-dark">Apply filters</button>
+          <a href="{% url 'marketplace:admin_users' %}" class="btn btn-outline-secondary">Reset</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card border-0">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>User</th>
+              <th>Activity</th>
+              <th>Role</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for member in users %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ member.get_full_name|default:member.username }}</div>
+                  <div class="text-muted small">@{{ member.username }} • {{ member.email|default:"No email" }}</div>
+                </td>
+                <td>
+                  <div class="small">{{ member.items_count }} listing{{ member.items_count|pluralize }}</div>
+                  <div class="text-muted small">{{ member.reports_count }} report{{ member.reports_count|pluralize }} submitted</div>
+                </td>
+                <td>
+                  {% if member.is_staff %}
+                    <span class="badge text-bg-dark">Staff</span>
+                  {% endif %}
+                  {% if member.is_active %}
+                    <span class="badge text-bg-success">Active</span>
+                  {% else %}
+                    <span class="badge text-bg-secondary">Inactive</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <form method="post" action="{% url 'marketplace:admin_user_action' member.pk %}" class="d-inline-flex flex-wrap justify-content-end gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    {% if member.is_active %}
+                      <button class="btn btn-outline-secondary btn-sm" type="submit" name="action" value="deactivate">Deactivate</button>
+                    {% else %}
+                      <button class="btn btn-outline-primary btn-sm" type="submit" name="action" value="activate">Activate</button>
+                    {% endif %}
+                    {% if member.is_staff %}
+                      <button class="btn btn-outline-danger btn-sm" type="submit" name="action" value="revoke_staff">Remove staff</button>
+                    {% else %}
+                      <button class="btn btn-dark btn-sm" type="submit" name="action" value="grant_staff">Grant staff</button>
+                    {% endif %}
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-muted py-4">No users match this filter set.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?{% if filter_params %}{{ filter_params }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?{% if filter_params %}{{ filter_params }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+{% endblock %}

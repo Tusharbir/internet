@@ -1,0 +1,277 @@
+{% extends 'marketplace/admin/base.html' %}
+
+{% block admin_content %}
+  <div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+      <div class="card admin-metric h-100 border-0">
+        <div class="card-body">
+          <span class="admin-metric-label">Users</span>
+          <h2>{{ stats.total_users }}</h2>
+          <p class="text-muted mb-0">{{ stats.active_users }} active, {{ stats.staff_users }} staff</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+      <div class="card admin-metric h-100 border-0">
+        <div class="card-body">
+          <span class="admin-metric-label">Listings</span>
+          <h2>{{ stats.total_items }}</h2>
+          <p class="text-muted mb-0">{{ stats.published_items }} live, {{ stats.draft_items }} drafts</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+      <div class="card admin-metric h-100 border-0">
+        <div class="card-body">
+          <span class="admin-metric-label">Reports</span>
+          <h2>{{ stats.open_reports }}</h2>
+          <p class="text-muted mb-0">{{ stats.resolved_reports }} resolved so far</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+      <div class="card admin-metric h-100 border-0">
+        <div class="card-body">
+          <span class="admin-metric-label">Messages</span>
+          <h2>{{ stats.total_messages }}</h2>
+          <p class="text-muted mb-0">{{ stats.unread_messages }} unread conversations</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h3 class="section-title mb-1">Moderation Queue</h3>
+              <p class="text-muted small mb-0">Newest open and in-review reports.</p>
+            </div>
+            <a href="{% url 'marketplace:admin_reports' %}" class="btn btn-outline-primary btn-sm">Open reports</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Listing</th>
+                  <th>Reporter</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for report in recent_reports %}
+                  <tr>
+                    <td>
+                      <a href="{% url 'marketplace:item_detail' report.item.pk %}">{{ report.item.title }}</a>
+                      <div class="text-muted small">{{ report.created_at|date:"M j, Y g:i A" }}</div>
+                    </td>
+                    <td>{{ report.reporter.username }}</td>
+                    <td>{{ report.get_reason_display }}</td>
+                    <td><span class="badge admin-status admin-status-{{ report.status }}">{{ report.get_status_display }}</span></td>
+                    <td class="text-end">
+                      <form method="post" action="{% url 'marketplace:admin_report_action' report.pk %}" class="d-inline-flex gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button class="btn btn-outline-secondary btn-sm" type="submit" name="action" value="review">Review</button>
+                        <button class="btn btn-dark btn-sm" type="submit" name="action" value="unpublish_item">Unpublish</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No reports are waiting for review.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0 h-100">
+        <div class="card-body">
+          <h3 class="section-title mb-3">Marketplace Snapshot</h3>
+          <div class="admin-mini-stat">
+            <span>New users in last 7 days</span>
+            <strong>{{ stats.new_users_last_7_days }}</strong>
+          </div>
+          <div class="admin-mini-stat">
+            <span>New listings in last 7 days</span>
+            <strong>{{ stats.new_items_last_7_days }}</strong>
+          </div>
+          <div class="admin-mini-stat">
+            <span>Sold listings</span>
+            <strong>{{ stats.sold_items }}</strong>
+          </div>
+          <div class="admin-mini-stat">
+            <span>Categories</span>
+            <strong>{{ stats.total_categories }}</strong>
+          </div>
+          <hr>
+          <h4 class="h6 text-uppercase text-muted mb-3">Report Breakdown</h4>
+          <div class="d-grid gap-2">
+            {% for entry in report_reason_breakdown %}
+              <div class="admin-mini-stat">
+                <span>{{ entry.reason|title }}</span>
+                <strong>{{ entry.total }}</strong>
+              </div>
+            {% empty %}
+              <p class="text-muted mb-0">No reports submitted yet.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="card border-0 h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h3 class="section-title mb-1">Flagged Listings</h3>
+              <p class="text-muted small mb-0">Listings with unresolved reports.</p>
+            </div>
+            <a href="{% url 'marketplace:admin_items' %}?reported=reported" class="btn btn-outline-primary btn-sm">View all</a>
+          </div>
+          <div class="d-grid gap-3">
+            {% for item in flagged_items %}
+              <div class="admin-list-card">
+                <div>
+                  <a href="{% url 'marketplace:item_detail' item.pk %}" class="fw-semibold">{{ item.title }}</a>
+                  <div class="text-muted small">{{ item.seller.username }} • {{ item.category.name }}</div>
+                </div>
+                <span class="badge text-bg-danger">{{ item.open_reports_count }} report{{ item.open_reports_count|pluralize }}</span>
+              </div>
+            {% empty %}
+              <p class="text-muted mb-0">No flagged listings right now.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card border-0 h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h3 class="section-title mb-1">Recent Listings</h3>
+              <p class="text-muted small mb-0">Newest items entering the marketplace.</p>
+            </div>
+            <a href="{% url 'marketplace:admin_items' %}" class="btn btn-outline-primary btn-sm">Manage listings</a>
+          </div>
+          <div class="d-grid gap-3">
+            {% for item in recent_items %}
+              <div class="admin-list-card">
+                <div>
+                  <a href="{% url 'marketplace:item_detail' item.pk %}" class="fw-semibold">{{ item.title }}</a>
+                  <div class="text-muted small">{{ item.seller.username }} • {{ item.get_status_display }}</div>
+                </div>
+                <span class="badge text-bg-light">${{ item.price|floatformat:2 }}</span>
+              </div>
+            {% empty %}
+              <p class="text-muted mb-0">No listings yet.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="card border-0 h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="section-title mb-0">Newest Users</h3>
+            <a href="{% url 'marketplace:admin_users' %}" class="btn btn-outline-primary btn-sm">Manage users</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>User</th>
+                  <th>Joined</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for member in newest_users %}
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">{{ member.username }}</div>
+                      <div class="text-muted small">{{ member.email|default:"No email" }}</div>
+                    </td>
+                    <td>{{ member.date_joined|date:"M j, Y" }}</td>
+                    <td>
+                      {% if member.is_staff %}
+                        <span class="badge text-bg-dark">Staff</span>
+                      {% elif member.is_active %}
+                        <span class="badge text-bg-success">Active</span>
+                      {% else %}
+                        <span class="badge text-bg-secondary">Inactive</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="3" class="text-center text-muted py-4">No users found.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="card border-0 h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="section-title mb-0">Recent Messages</h3>
+            <a href="{% url 'marketplace:admin_messages' %}" class="btn btn-outline-primary btn-sm">Open messages</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Conversation</th>
+                  <th>Preview</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for message in recent_messages %}
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">{{ message.sender.username }} → {{ message.recipient.username }}</div>
+                      <div class="text-muted small">{{ message.item.title }}</div>
+                    </td>
+                    <td>{{ message.body|truncatechars:70 }}</td>
+                    <td>
+                      {% if message.is_read %}
+                        <span class="badge text-bg-light">Read</span>
+                      {% else %}
+                        <span class="badge text-bg-warning">Unread</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="3" class="text-center text-muted py-4">No messages yet.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

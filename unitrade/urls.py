@@ -18,9 +18,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from marketplace import views as marketplace_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/login/', marketplace_views.UserLoginView.as_view(), name='login'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('', include('marketplace.urls')),
 ]

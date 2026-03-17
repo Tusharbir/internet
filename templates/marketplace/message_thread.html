@@ -3,38 +3,81 @@
 {% block title %}Messages | UniTrade{% endblock %}
 
 {% block content %}
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h3>Messages about "{{ item.title }}"</h3>
-      <p class="text-muted">Seller: {{ seller }}</p>
-    </div>
-  </div>
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h3>Messages about "{{ item.title }}"</h3>
+          <p class="text-muted mb-0">
+            {% if request.user == seller %}
+              Buyer: {{ thread_recipient.get_full_name|default:thread_recipient.username|default:"Select a conversation" }}
+            {% else %}
+              Seller: {{ seller }}
+            {% endif %}
+            &bull; <a href="{% url 'marketplace:item_detail' item.pk %}">View listing</a>
+            &bull; <a href="{% url 'marketplace:messages_inbox' %}">Inbox</a>
+          </p>
+        </div>
+      </div>
 
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      {% for message in messages %}
-        <div class="mb-3">
-          <div class="small text-muted">
-            {{ message.sender }} • {{ message.created_at|date:"M d, Y H:i" }}
-          </div>
-          <div class="p-3 bg-light rounded">
-            {{ message.body }}
+      {% if request.user == seller and item_threads %}
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">Buyer conversations</h5>
+              <a href="{% url 'marketplace:messages_inbox' %}?item={{ item.pk }}" class="btn btn-outline-secondary btn-sm">View inbox</a>
+            </div>
+            <div class="d-grid gap-2">
+              {% for thread in item_threads %}
+                <a href="{{ thread.thread_url }}" class="conversation-chip {% if thread_recipient and thread.other_user.pk == thread_recipient.pk %}is-active{% endif %}">
+                  <span>
+                    <strong>{{ thread.other_user.get_full_name|default:thread.other_user.username }}</strong>
+                    <small class="d-block text-muted">{{ thread.last_message.body|truncatechars:60 }}</small>
+                  </span>
+                  {% if thread.unread_count %}
+                    <span class="badge text-bg-danger">{{ thread.unread_count }}</span>
+                  {% endif %}
+                </a>
+              {% endfor %}
+            </div>
           </div>
         </div>
-      {% empty %}
-        <p class="text-muted">No messages yet. Start the conversation.</p>
-      {% endfor %}
-    </div>
-  </div>
+      {% endif %}
 
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h5>Send a message</h5>
-      <form method="post">
-        {% csrf_token %}
-        {{ form.body }}
-        <button class="btn btn-primary mt-3" type="submit">Send</button>
-      </form>
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          {% for msg in thread_messages %}
+            <div class="mb-3 {% if msg.sender == request.user %}text-end{% endif %}">
+              <div class="small text-muted">
+                {{ msg.sender }} &bull; {{ msg.created_at|date:"M d, Y H:i" }}
+                {% if msg.is_read and msg.sender == request.user %}
+                  <i class="bi bi-check2-all text-primary" title="Read"></i>
+                {% endif %}
+              </div>
+              <div class="p-3 rounded d-inline-block {% if msg.sender == request.user %}bg-dark text-white{% else %}bg-light{% endif %}" style="max-width:80%;">
+                {{ msg.body }}
+              </div>
+            </div>
+          {% empty %}
+            <p class="text-muted">No messages yet. Start the conversation.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5>Send a message</h5>
+          <form method="post" autocomplete="off">
+            {% csrf_token %}
+            {% if thread_recipient %}
+              <input type="hidden" name="recipient" value="{{ thread_recipient.pk }}">
+            {% endif %}
+            {{ form.body }}
+            {% if form.body.errors %}<div class="text-danger small">{{ form.body.errors.0 }}</div>{% endif %}
+            <button class="btn btn-primary mt-3" type="submit"><i class="bi bi-send"></i> Send</button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}

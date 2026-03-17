@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -107,6 +108,11 @@ class Report(models.Model):
     REASON_FRAUD = 'fraud'
     REASON_OTHER = 'other'
 
+    STATUS_OPEN = 'open'
+    STATUS_IN_REVIEW = 'in_review'
+    STATUS_RESOLVED = 'resolved'
+    STATUS_DISMISSED = 'dismissed'
+
     REASON_CHOICES = [
         (REASON_SPAM, 'Spam or duplicate'),
         (REASON_PROHIBITED, 'Prohibited item'),
@@ -114,14 +120,31 @@ class Report(models.Model):
         (REASON_OTHER, 'Other'),
     ]
 
+    STATUS_CHOICES = [
+        (STATUS_OPEN, 'Open'),
+        (STATUS_IN_REVIEW, 'In Review'),
+        (STATUS_RESOLVED, 'Resolved'),
+        (STATUS_DISMISSED, 'Dismissed'),
+    ]
+
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='reports')
     reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports')
     reason = models.CharField(max_length=40, choices=REASON_CHOICES)
     comment = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_OPEN)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_reports',
+    )
+    reviewed_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('item', 'reporter')
+        ordering = ['-created_at']
 
     def __str__(self):
         return f'Report on {self.item} by {self.reporter}'

@@ -1,0 +1,83 @@
+{% extends 'marketplace/admin/base.html' %}
+
+{% block admin_content %}
+  <div class="card border-0 mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3">
+        <div class="col-md-8">{{ filter_form.q.label_tag }}{{ filter_form.q }}</div>
+        <div class="col-md-4">{{ filter_form.read_state.label_tag }}{{ filter_form.read_state }}</div>
+        <div class="col-12 d-flex gap-2">
+          <button type="submit" class="btn btn-dark">Apply filters</button>
+          <a href="{% url 'marketplace:admin_messages' %}" class="btn btn-outline-secondary">Reset</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card border-0">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Conversation</th>
+              <th>Message</th>
+              <th>Created</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for message in messages_list %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ message.sender.username }} → {{ message.recipient.username }}</div>
+                  <div class="text-muted small">{{ message.item.title }}</div>
+                </td>
+                <td>
+                  {{ message.body|truncatechars:120 }}
+                  <div class="mt-1">
+                    {% if message.is_read %}
+                      <span class="badge text-bg-light">Read</span>
+                    {% else %}
+                      <span class="badge text-bg-warning">Unread</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td>{{ message.created_at|date:"M j, Y g:i A" }}</td>
+                <td class="text-end">
+                  <form method="post" action="{% url 'marketplace:admin_message_action' message.pk %}" class="d-inline-flex gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    {% if message.is_read %}
+                      <button class="btn btn-outline-secondary btn-sm" type="submit" name="action" value="mark_unread">Mark unread</button>
+                    {% else %}
+                      <button class="btn btn-dark btn-sm" type="submit" name="action" value="mark_read">Mark read</button>
+                    {% endif %}
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-muted py-4">No messages match this filter set.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?{% if filter_params %}{{ filter_params }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?{% if filter_params %}{{ filter_params }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+{% endblock %}

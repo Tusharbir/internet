@@ -4,21 +4,59 @@
 
 {% block content %}
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>My dashboard</h2>
-    <a href="{% url 'marketplace:item_post' %}" class="btn btn-primary">Post new ad</a>
+    <h2>My Dashboard</h2>
+    <a href="{% url 'marketplace:item_post' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Post new ad</a>
   </div>
 
-  <h4 class="mt-4">My drafts</h4>
+  <!-- Visit History (Session/Cookie tracking) -->
+  {% if visit_history %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-bar-chart"></i> Your Visit History</h5>
+        <p class="text-muted small">Pages viewed per day (tracked via session)</p>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Page Views</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for date, count in visit_history.items %}
+                <tr>
+                  <td>{{ date }}</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="progress flex-grow-1" style="height: 20px;">
+                        <div class="progress-bar bg-dark" style="width: {% widthratio count 50 100 %}%">{{ count }}</div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Drafts -->
+  <h4 class="mt-4"><i class="bi bi-file-earmark-text"></i> My Drafts</h4>
   <div class="row g-4">
     {% for item in draft_items %}
       <div class="col-md-6 col-xl-4">
         <div class="card h-100 shadow-sm">
           {% if item.images.first %}
             <img src="{{ item.images.first.image.url }}" class="card-img-top" alt="{{ item.title }}">
+          {% else %}
+            <div class="card-img-top-placeholder"></div>
           {% endif %}
           <div class="card-body">
+            <span class="badge text-bg-secondary mb-2">Draft</span>
             <h5>{{ item.title }}</h5>
-            <p class="text-muted">{{ item.category.name }}</p>
+            <p class="text-muted small">{{ item.category.name }} &bull; ${{ item.price|floatformat:2 }}</p>
             <div class="d-flex gap-2">
               <a href="{% url 'marketplace:item_update' item.pk %}" class="btn btn-outline-secondary btn-sm">Edit</a>
               <a href="{% url 'marketplace:item_delete' item.pk %}" class="btn btn-outline-danger btn-sm">Delete</a>
@@ -31,18 +69,23 @@
     {% endfor %}
   </div>
 
-  <h4 class="mt-5">My published listings</h4>
+  <!-- Published -->
+  <h4 class="mt-5"><i class="bi bi-broadcast"></i> My Published Listings</h4>
   <div class="row g-4">
     {% for item in published_items %}
       <div class="col-md-6 col-xl-4">
         <div class="card h-100 shadow-sm">
           {% if item.images.first %}
             <img src="{{ item.images.first.image.url }}" class="card-img-top" alt="{{ item.title }}">
+          {% else %}
+            <div class="card-img-top-placeholder"></div>
           {% endif %}
           <div class="card-body">
+            <span class="badge text-bg-success mb-2">Published</span>
             <h5>{{ item.title }}</h5>
-            <p class="text-muted">{{ item.category.name }}</p>
+            <p class="text-muted small">{{ item.category.name }} &bull; ${{ item.price|floatformat:2 }}</p>
             <div class="d-flex gap-2">
+              <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-outline-primary btn-sm">View</a>
               <a href="{% url 'marketplace:item_update' item.pk %}" class="btn btn-outline-secondary btn-sm">Edit</a>
               <form method="post" action="{% url 'marketplace:item_mark_sold' item.pk %}">
                 {% csrf_token %}
@@ -57,17 +100,21 @@
     {% endfor %}
   </div>
 
-  <h4 class="mt-5">My sold listings</h4>
+  <!-- Sold -->
+  <h4 class="mt-5"><i class="bi bi-check-circle"></i> My Sold Listings</h4>
   <div class="row g-4">
     {% for item in sold_items %}
       <div class="col-md-6 col-xl-4">
         <div class="card h-100 shadow-sm">
           {% if item.images.first %}
             <img src="{{ item.images.first.image.url }}" class="card-img-top" alt="{{ item.title }}">
+          {% else %}
+            <div class="card-img-top-placeholder"></div>
           {% endif %}
           <div class="card-body">
+            <span class="badge text-bg-dark mb-2">Sold</span>
             <h5>{{ item.title }}</h5>
-            <p class="text-muted">{{ item.category.name }}</p>
+            <p class="text-muted small">{{ item.category.name }} &bull; ${{ item.price|floatformat:2 }}</p>
             <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-outline-primary btn-sm">View</a>
           </div>
         </div>
@@ -77,22 +124,54 @@
     {% endfor %}
   </div>
 
-  <h3 class="mt-5">Recently viewed</h3>
+  <!-- Recently Viewed -->
+  <h4 class="mt-5"><i class="bi bi-clock-history"></i> Recently Viewed</h4>
   <div class="row g-4">
     {% for item in recently_viewed %}
       <div class="col-md-6 col-xl-3">
         <div class="card h-100 shadow-sm">
           {% if item.images.first %}
             <img src="{{ item.images.first.image.url }}" class="card-img-top" alt="{{ item.title }}">
+          {% else %}
+            <div class="card-img-top-placeholder"></div>
           {% endif %}
           <div class="card-body">
             <h6>{{ item.title }}</h6>
+            <p class="text-muted small mb-1">${{ item.price|floatformat:2 }}</p>
             <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-link p-0">View</a>
           </div>
         </div>
       </div>
     {% empty %}
-      <div class="col-12 text-muted">No recently viewed items yet.</div>
+      <div class="col-12 text-muted">No recently viewed items yet. Browse some listings!</div>
+    {% endfor %}
+  </div>
+
+  <h4 class="mt-5 d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-chat-dots"></i> Recent Conversations</span>
+    <a href="{% url 'marketplace:messages_inbox' %}" class="btn btn-outline-primary btn-sm">Open inbox</a>
+  </h4>
+  <div class="row g-4">
+    {% for thread in recent_message_threads %}
+      <div class="col-md-6 col-xl-4">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div>
+                <h6 class="mb-1">{{ thread.other_user.get_full_name|default:thread.other_user.username }}</h6>
+                <p class="text-muted small mb-2">{{ thread.item.title }}</p>
+              </div>
+              {% if thread.unread_count %}
+                <span class="badge text-bg-danger">{{ thread.unread_count }}</span>
+              {% endif %}
+            </div>
+            <p class="small mb-3">{{ thread.last_message.body|truncatechars:90 }}</p>
+            <a href="{{ thread.thread_url }}" class="btn btn-link p-0">Open conversation</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-muted">No conversations yet. Messages from buyers and sellers will show up here.</div>
     {% endfor %}
   </div>
 {% endblock %}

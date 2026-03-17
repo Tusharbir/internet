@@ -7,16 +7,24 @@
     <div class="card-body">
       <h3 class="card-title mb-2">Report listing</h3>
       <p class="text-muted">Reporting: <strong>{{ item.title }}</strong></p>
-      <form method="post" class="vstack gap-3">
+      <form method="post" class="vstack gap-3" autocomplete="off">
         {% csrf_token %}
-        {{ form.non_field_errors }}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+              <p class="mb-0">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
         <div>
           {{ form.reason.label_tag }}
           {{ form.reason }}
+          {% if form.reason.errors %}<div class="text-danger small">{{ form.reason.errors.0 }}</div>{% endif %}
         </div>
         <div>
           {{ form.comment.label_tag }}
           {{ form.comment }}
+          {% if form.comment.errors %}<div class="text-danger small">{{ form.comment.errors.0 }}</div>{% endif %}
         </div>
         <button class="btn btn-danger" type="submit">Submit report</button>
         <a class="btn btn-outline-secondary" href="{% url 'marketplace:item_detail' item.pk %}">Cancel</a>

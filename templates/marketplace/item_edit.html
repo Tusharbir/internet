@@ -3,60 +3,141 @@
 {% block title %}Edit Listing | UniTrade{% endblock %}
 
 {% block content %}
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h3 class="card-title mb-3">Edit listing</h3>
-      <form method="post" enctype="multipart/form-data" class="vstack gap-3">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        <div>
-          {{ form.title.label_tag }}
-          {{ form.title }}
-        </div>
-        <div>
-          {{ form.description.label_tag }}
-          {{ form.description }}
-        </div>
-        <div class="row g-3">
-          <div class="col-md-6">
-            {{ form.price.label_tag }}
-            <div class="input-group">
-              <span class="input-group-text">$</span>
-              {{ form.price }}
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h3 class="card-title mb-3">Edit listing</h3>
+          <form method="post" enctype="multipart/form-data" class="vstack gap-3" id="edit-ad-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                  <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <div>
+              {{ form.title.label_tag }}
+              {{ form.title }}
+              {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors.0 }}</div>{% endif %}
             </div>
-          </div>
-          <div class="col-md-6">
-            {{ form.condition.label_tag }}
-            {{ form.condition }}
-          </div>
+            <div>
+              {{ form.description.label_tag }}
+              {{ form.description }}
+              {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                {{ form.price.label_tag }}
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  {{ form.price }}
+                </div>
+                {% if form.price.errors %}<div class="text-danger small">{{ form.price.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                {{ form.condition.label_tag }}
+                {{ form.condition }}
+              </div>
+            </div>
+            <div>
+              {{ form.category.label_tag }}
+              {{ form.category }}
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                {{ form.location.label_tag }}
+                {{ form.location }}
+              </div>
+              <div class="col-md-6">
+                {{ form.status.label_tag }}
+                {{ form.status }}
+              </div>
+            </div>
+            <div class="form-check form-switch">
+              {{ form.negotiable }}
+              <label class="form-check-label" for="{{ form.negotiable.id_for_label }}">
+                Negotiable
+              </label>
+            </div>
+
+            <!-- Existing images with delete option -->
+            {% if existing_images %}
+              <div>
+                <label class="form-label fw-semibold">Current Images</label>
+                <div class="row g-2" id="existing-images">
+                  {% for image in existing_images %}
+                    <div class="col-4 col-md-3 existing-img-wrapper" data-image-id="{{ image.pk }}">
+                      <div class="border rounded-3 p-1 bg-white text-center position-relative">
+                        <img src="{{ image.image.url }}" alt="Image" class="img-fluid rounded" style="height:100px;object-fit:cover;width:100%;">
+                        <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 remove-img-btn" title="Remove image">
+                          <i class="bi bi-x"></i>
+                        </button>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            {{ form.delete_images }}
+
+            <div>
+              <label class="form-label fw-semibold">Add more images</label>
+              {{ form.images }}
+              <div class="form-text">{{ form.images.help_text }}</div>
+              {% if form.images.errors %}<div class="text-danger small">{{ form.images.errors.0 }}</div>{% endif %}
+            </div>
+            <div id="image-preview" class="row g-2"></div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save changes</button>
+          </form>
         </div>
-        <div>
-          {{ form.category.label_tag }}
-          {{ form.category }}
-        </div>
-        <div class="row g-3">
-          <div class="col-md-6">
-            {{ form.location.label_tag }}
-            {{ form.location }}
-          </div>
-          <div class="col-md-6">
-            {{ form.status.label_tag }}
-            {{ form.status }}
-          </div>
-        </div>
-        <div class="form-check form-switch">
-          {{ form.negotiable }}
-          <label class="form-check-label" for="{{ form.negotiable.id_for_label }}">
-            Negotiable
-          </label>
-        </div>
-        <div>
-          {{ form.images.label_tag }}
-          {{ form.images }}
-          <div class="form-text">{{ form.images.help_text }}</div>
-        </div>
-        <button type="submit" class="btn btn-primary">Save changes</button>
-      </form>
+      </div>
     </div>
   </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    // Image deletion handling
+    const deleteInput = document.getElementById("id_delete_images");
+    const deletedIds = new Set();
+
+    document.querySelectorAll(".remove-img-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const wrapper = btn.closest(".existing-img-wrapper");
+        const imgId = wrapper.dataset.imageId;
+        deletedIds.add(imgId);
+        deleteInput.value = Array.from(deletedIds).join(",");
+        wrapper.style.opacity = "0.3";
+        wrapper.style.pointerEvents = "none";
+        btn.disabled = true;
+      });
+    });
+
+    // New image preview
+    const input = document.getElementById("id_images");
+    const preview = document.getElementById("image-preview");
+    if (input) {
+      input.addEventListener("change", () => {
+        preview.innerHTML = "";
+        const files = Array.from(input.files).slice(0, 6);
+        files.forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const col = document.createElement("div");
+            col.className = "col-4 col-md-3";
+            col.innerHTML = `
+              <div class="border rounded-3 p-1 bg-white text-center">
+                <img src="${event.target.result}" alt="Preview" class="img-fluid rounded" style="height:100px;object-fit:cover;width:100%;">
+                <small class="text-muted d-block mt-1">${file.name.substring(0,20)}</small>
+              </div>`;
+            preview.appendChild(col);
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+    }
+  </script>
 {% endblock %}

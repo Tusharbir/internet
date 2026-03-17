@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ admin_page_title }} | UniTrade{% endblock %}
+
+{% block content %}
+  <section class="admin-shell">
+    <div class="admin-hero card border-0 mb-4">
+      <div class="card-body p-4 p-lg-5">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+          <div>
+            <span class="admin-kicker">Staff Workspace</span>
+            <h1 class="admin-title mb-2">{{ admin_page_title }}</h1>
+            <p class="text-muted mb-0">{{ admin_page_intro }}</p>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="admin-pill">
+              <i class="bi bi-flag"></i> {{ admin_open_reports_count }} open report{{ admin_open_reports_count|pluralize }}
+            </span>
+            <a class="btn btn-dark" href="{% url 'admin:index' %}">Django Admin</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-tabs card border-0 mb-4">
+      <div class="card-body p-2">
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{% url 'marketplace:admin_dashboard' %}" class="admin-tab {% if admin_section == 'overview' %}is-active{% endif %}">Overview</a>
+          <a href="{% url 'marketplace:admin_items' %}" class="admin-tab {% if admin_section == 'items' %}is-active{% endif %}">Listings</a>
+          <a href="{% url 'marketplace:admin_reports' %}" class="admin-tab {% if admin_section == 'reports' %}is-active{% endif %}">Reports</a>
+          <a href="{% url 'marketplace:admin_users' %}" class="admin-tab {% if admin_section == 'users' %}is-active{% endif %}">Users</a>
+          <a href="{% url 'marketplace:admin_categories' %}" class="admin-tab {% if admin_section == 'categories' %}is-active{% endif %}">Categories</a>
+          <a href="{% url 'marketplace:admin_messages' %}" class="admin-tab {% if admin_section == 'messages' %}is-active{% endif %}">Messages</a>
+        </div>
+      </div>
+    </div>
+
+    {% block admin_content %}{% endblock %}
+  </section>
+{% endblock %}

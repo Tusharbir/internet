@@ -1,0 +1,29 @@
+{% extends 'marketplace/admin/base.html' %}
+
+{% block admin_content %}
+  <div class="card border-0 admin-form-card">
+    <div class="card-body p-4">
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-12">
+          <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+          {{ form.name }}
+          {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors|join:", " }}</div>{% endif %}
+        </div>
+        <div class="col-12">
+          <label for="{{ form.slug.id_for_label }}" class="form-label">Slug</label>
+          {{ form.slug }}
+          <div class="form-text">Leave blank to generate it from the category name.</div>
+          {% if form.slug.errors %}<div class="text-danger small mt-1">{{ form.slug.errors|join:", " }}</div>{% endif %}
+        </div>
+        {% if form.non_field_errors %}
+          <div class="col-12 text-danger small">{{ form.non_field_errors|join:", " }}</div>
+        {% endif %}
+        <div class="col-12 d-flex gap-2">
+          <button type="submit" class="btn btn-dark">Save category</button>
+          <a href="{% url 'marketplace:admin_categories' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

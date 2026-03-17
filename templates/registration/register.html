@@ -8,25 +8,55 @@
       <div class="card shadow-sm">
         <div class="card-body">
           <h3 class="card-title mb-3">Create account</h3>
-          <form method="post" class="vstack gap-3">
+          <form method="post" class="vstack gap-3" autocomplete="off">
             {% csrf_token %}
-            {{ form.non_field_errors }}
-            {{ form.username.label_tag }}
-            {{ form.username }}
-            {{ form.first_name.label_tag }}
-            {{ form.first_name }}
-            {{ form.last_name.label_tag }}
-            {{ form.last_name }}
-            {{ form.email.label_tag }}
-            {{ form.email }}
-            {{ form.university_email.label_tag }}
-            {{ form.university_email }}
-            {{ form.student_id.label_tag }}
-            {{ form.student_id }}
-            {{ form.password1.label_tag }}
-            {{ form.password1 }}
-            {{ form.password2.label_tag }}
-            {{ form.password2 }}
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                  <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <div>
+              {{ form.username.label_tag }}
+              {{ form.username }}
+              {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors.0 }}</div>{% endif %}
+            </div>
+            <div>
+              {{ form.first_name.label_tag }}
+              {{ form.first_name }}
+              {% if form.first_name.errors %}<div class="text-danger small">{{ form.first_name.errors.0 }}</div>{% endif %}
+            </div>
+            <div>
+              {{ form.last_name.label_tag }}
+              {{ form.last_name }}
+              {% if form.last_name.errors %}<div class="text-danger small">{{ form.last_name.errors.0 }}</div>{% endif %}
+            </div>
+            <div>
+              {{ form.email.label_tag }}
+              {{ form.email }}
+              {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors.0 }}</div>{% endif %}
+            </div>
+            <div>
+              {{ form.university_email.label_tag }}
+              {{ form.university_email }}
+              {% if form.university_email.errors %}<div class="text-danger small">{{ form.university_email.errors.0 }}</div>{% endif %}
+            </div>
+            <div>
+              {{ form.student_id.label_tag }}
+              {{ form.student_id }}
+              {% if form.student_id.errors %}<div class="text-danger small">{{ form.student_id.errors.0 }}</div>{% endif %}
+            </div>
+            <div>
+              {{ form.password1.label_tag }}
+              {{ form.password1 }}
+              {% if form.password1.errors %}<div class="text-danger small">{{ form.password1.errors.0 }}</div>{% endif %}
+            </div>
+            <div>
+              {{ form.password2.label_tag }}
+              {{ form.password2 }}
+              {% if form.password2.errors %}<div class="text-danger small">{{ form.password2.errors.0 }}</div>{% endif %}
+            </div>
             <button class="btn btn-primary" type="submit">Register</button>
           </form>
         </div>
