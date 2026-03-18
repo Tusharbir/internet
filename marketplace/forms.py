@@ -44,6 +44,31 @@ class UserRegistrationForm(UserCreationForm):
         return email
 
 
+class UserProfileForm(forms.ModelForm):
+    university_email = forms.EmailField(required=True, help_text='Use your @uwindsor.ca email.')
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email', 'university_email', 'student_id')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.setdefault('class', 'form-control')
+            if field_name == 'email':
+                field.widget.attrs.setdefault('autocomplete', 'email')
+            else:
+                field.widget.attrs.setdefault('autocomplete', 'off')
+
+    def clean_university_email(self):
+        email = (self.cleaned_data.get('university_email') or '').strip().lower()
+        if not email:
+            raise forms.ValidationError('University email is required.')
+        if not email.endswith('@uwindsor.ca'):
+            raise forms.ValidationError('Please use your @uwindsor.ca email address.')
+        return email
+
+
 class MultiFileInput(forms.FileInput):
     allow_multiple_selected = True
 
