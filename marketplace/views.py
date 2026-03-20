@@ -561,6 +561,24 @@ class MarkSoldView(SellerOwnsItemMixin, View):
         return redirect('marketplace:item_detail', pk=self.item.pk)
 
 
+class ListAgainView(SellerOwnsItemMixin, View):
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        self.item = get_object_or_404(Item, pk=kwargs['pk'])
+
+    def get_object(self):
+        return self.item
+
+    def post(self, request, *args, **kwargs):
+        if self.item.status != Item.STATUS_SOLD:
+            messages.info(request, 'This listing is already active.')
+            return redirect('marketplace:item_detail', pk=self.item.pk)
+        self.item.status = Item.STATUS_PUBLISHED
+        self.item.save(update_fields=['status'])
+        messages.success(request, 'Listing is available again.')
+        return redirect('marketplace:item_detail', pk=self.item.pk)
+
+
 class FavoriteToggleView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         item = get_object_or_404(Item, pk=kwargs['pk'])
