@@ -650,6 +650,49 @@ class MarkSoldViewTests(TestCase):
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class ListAgainViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='seller', password='testpass123')
+        self.cat = Category.objects.create(name='Test', slug='test')
+        self.item = Item.objects.create(
+            seller=self.user,
+            category=self.cat,
+            title='Sold Item Relist',
+            description='This item was sold and may be listed again.',
+            price=Decimal('75.00'),
+            condition=Item.CONDITION_GOOD,
+            status=Item.STATUS_SOLD,
+        )
+
+    def test_list_again(self):
+        self.client.login(username='seller', password='testpass123')
+        response = self.client.post(reverse('marketplace:item_list_again', kwargs={'pk': self.item.pk}))
+        self.assertEqual(response.status_code, 302)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.status, Item.STATUS_PUBLISHED)
+
+    def test_list_again_forbidden_for_non_owner(self):
+        other = User.objects.create_user(username='other', password='testpass123')
+        self.client.login(username='other', password='testpass123')
+        response = self.client.post(reverse('marketplace:item_list_again', kwargs={'pk': self.item.pk}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_list_again_twice_is_handled_gracefully(self):
+        self.client.login(username='seller', password='testpass123')
+        self.client.post(reverse('marketplace:item_list_again', kwargs={'pk': self.item.pk}))
+
+        response = self.client.post(
+            reverse('marketplace:item_list_again', kwargs={'pk': self.item.pk}),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'This listing is already active.')
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.status, Item.STATUS_PUBLISHED)
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
 class FavoriteViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='buyer', password='testpass123')
