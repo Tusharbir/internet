@@ -701,6 +701,17 @@ textarea.form-control {
   margin-bottom: 0.35rem;
 }
 
+/* Keyboard focus (don’t override mouse :focus on Bootstrap buttons) */
+.premium-nav .nav-link:focus-visible,
+.premium-nav .nav-logout-form .nav-link:focus-visible,
+.btn:focus-visible,
+.page-link:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible {
+  outline: 2px solid var(--ut-gold);
+  outline-offset: 2px;
+}
+
 /* Pagination */
 .pagination .page-link {
   color: var(--ut-charcoal);
