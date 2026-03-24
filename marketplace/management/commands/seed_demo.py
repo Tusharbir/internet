@@ -1,5 +1,7 @@
 from datetime import timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -187,11 +189,33 @@ class Command(BaseCommand):
             b"\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44"
             b"\x01\x00\x3b"
         )
-        for item in items:
-            if item.images.exists():
+        media_items_dir = Path(settings.MEDIA_ROOT) / "items"
+        preferred_images = [
+            path for path in media_items_dir.iterdir()
+            if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}
+        ] if media_items_dir.exists() else []
+
+        for index, item in enumerate(items):
+            existing_images = list(item.images.all())
+            has_real_image = any(Path(image.image.name).suffix.lower() != ".gif" for image in existing_images)
+            if has_real_image:
                 continue
+
+            if existing_images:
+                for image in existing_images:
+                    image.image.delete(save=False)
+                    image.delete()
+
             img = ItemImage(item=item)
-            img.image.save(f"items/{item.pk}_1.gif", ContentFile(tiny_gif), save=True)
+            if preferred_images:
+                source = preferred_images[index % len(preferred_images)]
+                img.image.save(
+                    f"items/demo_{item.pk}{source.suffix.lower()}",
+                    ContentFile(source.read_bytes()),
+                    save=True,
+                )
+            else:
+                img.image.save(f"items/{item.pk}_1.gif", ContentFile(tiny_gif), save=True)
 
     def _create_messages(self, users, items):
         buyer = users["buyer_one"]
