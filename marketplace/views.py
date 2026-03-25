@@ -206,6 +206,10 @@ class LandingView(TemplateView):
         )
         return context
 
+
+class AboutView(TemplateView):
+    template_name = 'marketplace/about.html'
+
 #browse view with filters, sorting, and pagination
 class BrowseListView(ListView):
     model = Item
