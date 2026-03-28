@@ -240,6 +240,11 @@ class BrowseViewTests(TestCase):
         response = self.client.get(reverse('marketplace:browse'), {'q': 'Book', 'page': '1'})
         self.assertIn('filter_params', response.context)
 
+    def test_browse_shows_placeholder_for_listing_without_image(self):
+        response = self.client.get(reverse('marketplace:browse'))
+        self.assertContains(response, 'No image uploaded')
+        self.assertContains(response, 'listing-media-placeholder')
+
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
 class ItemDetailViewTests(TestCase):
@@ -283,6 +288,11 @@ class ItemDetailViewTests(TestCase):
     def test_last_viewed_cookie(self):
         response = self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
         self.assertEqual(response.cookies['last_viewed_item'].value, str(self.item.pk))
+
+    def test_detail_shows_placeholder_when_listing_has_no_image(self):
+        response = self.client.get(reverse('marketplace:item_detail', kwargs={'pk': self.item.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No listing image uploaded')
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
@@ -360,6 +370,21 @@ class ItemCreateViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Price must be zero or greater.')
         self.assertFalse(Item.objects.filter(title='Negative Price Item').exists())
+
+    def test_create_item_invalid_extension_fails(self):
+        fake_image = SimpleUploadedFile('notes.txt', b'not an image', content_type='image/png')
+        response = self.client.post(reverse('marketplace:item_post'), {
+            'title': 'Invalid Extension Item',
+            'description': 'This item uses a bad extension and should be rejected cleanly.',
+            'price': '20.00',
+            'condition': Item.CONDITION_GOOD,
+            'category': self.cat.pk,
+            'status': Item.STATUS_PUBLISHED,
+            'images': fake_image,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'unsupported file extension')
+        self.assertFalse(Item.objects.filter(title='Invalid Extension Item').exists())
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)

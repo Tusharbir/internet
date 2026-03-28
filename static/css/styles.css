@@ -302,6 +302,37 @@ a:focus {
   border-top-right-radius: 18px;
 }
 
+.listing-media-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.45rem;
+  text-align: center;
+  color: var(--ut-soft-charcoal);
+}
+
+.listing-media-placeholder i {
+  font-size: 1.6rem;
+  color: rgba(31, 30, 27, 0.55);
+}
+
+.listing-media-placeholder small {
+  color: rgba(31, 30, 27, 0.7);
+}
+
+.card-img-top-placeholder .listing-media-placeholder {
+  height: 100%;
+  padding: 1rem;
+}
+
+.detail-image-placeholder {
+  min-height: 320px;
+  background: linear-gradient(135deg, rgba(31, 30, 27, 0.08), rgba(198, 161, 91, 0.18));
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+}
+
 .detail-carousel-img {
   height: 400px;
   object-fit: cover;

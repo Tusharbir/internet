@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.utils.text import slugify
@@ -144,7 +146,13 @@ class ItemForm(forms.ModelForm):
     def clean_images(self):
         images = self.cleaned_data.get('images') or []
         allowed_types = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
+        allowed_extensions = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
         for img in images:
+            extension = Path(img.name).suffix.lower()
+            if extension not in allowed_extensions:
+                raise forms.ValidationError(
+                    f'"{img.name}" has an unsupported file extension. Allowed: JPG, PNG, WebP, GIF.'
+                )
             if img.content_type not in allowed_types:
                 raise forms.ValidationError(
                     f'"{img.name}" is not a valid image. Allowed: JPG, PNG, WebP, GIF.'
