@@ -30,7 +30,7 @@ from .forms import (
 )
 from .models import Category, Favorite, Item, ItemImage, Message, Report, User
 
-
+# message threads 
 def build_message_threads(user, item_id=None):
     queryset = (
         Message.objects.filter(Q(sender=user) | Q(recipient=user))
@@ -102,7 +102,7 @@ class AdminPanelContextMixin:
             'marketplace:admin_dashboard'
         )
 
-
+# register view
 class RegisterView(FormView):
     template_name = 'registration/register.html'
     form_class = UserRegistrationForm
@@ -132,7 +132,7 @@ class UserLoginView(LoginView):
             return reverse('marketplace:admin_dashboard')
         return reverse('marketplace:browse')
 
-
+#landing view
 class LandingView(TemplateView):
     template_name = 'landing.html'
 
@@ -146,7 +146,7 @@ class LandingView(TemplateView):
         )
         return context
 
-
+#browse view with filters, sorting, and pagination
 class BrowseListView(ListView):
     model = Item
     template_name = 'marketplace/home.html'
