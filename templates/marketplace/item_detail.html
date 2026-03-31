@@ -8,7 +8,7 @@
     <div class="col-lg-7">
       <div class="card shadow-sm">
         <!-- Main image carousel -->
-        {% if item.images.all %}
+        {% if item.images.count %}
           <div id="itemCarousel" class="carousel slide" data-bs-ride="false">
             <div class="carousel-inner">
               {% for image in item.images.all %}
@@ -26,6 +26,10 @@
               </button>
             {% endif %}
           </div>
+        {% else %}
+          <div class="d-flex align-items-center justify-content-center bg-light text-muted" style="min-height: 320px;">
+            No listing image uploaded
+          </div>
         {% endif %}
         <div class="card-body">
           <h2>{{ item.title }}</h2>
@@ -36,8 +40,12 @@
             <span class="badge text-bg-secondary mb-2">Draft</span>
           {% endif %}
           <p class="fs-4 fw-semibold mb-2">${{ item.price|floatformat:2 }}</p>
-          <p><span class="badge bg-secondary">{{ item.get_condition_display }}</span></p>
-          <p class="text-muted small"><i class="bi bi-geo-alt"></i> {{ item.location }}</p>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="badge bg-secondary">{{ item.get_condition_display }}</span>
+            <span class="badge text-bg-light border">{{ item.category.name }}</span>
+          </div>
+          <p class="text-muted small mb-1"><i class="bi bi-geo-alt"></i> {{ item.location }}</p>
+          <p class="text-muted small">Last updated {{ item.updated_at|date:"M d, Y" }}</p>
           {% if item.negotiable %}
             <span class="badge text-bg-light border"><i class="bi bi-arrow-left-right"></i> Negotiable</span>
           {% endif %}
@@ -67,7 +75,8 @@
         <div class="card-body">
           <h5>Seller info</h5>
           <p class="mb-1"><i class="bi bi-person-circle"></i> {{ item.seller.get_full_name|default:item.seller.username }}</p>
-          <p class="text-muted small">Category: {{ item.category.name }}</p>
+          <p class="text-muted small mb-1">Category: {{ item.category.name }}</p>
+          <p class="text-muted small">Status: {{ item.get_status_display }}</p>
 
           {% if last_viewed_cookie %}
             <p class="text-muted small"><i class="bi bi-clock-history"></i> You last viewed item #{{ last_viewed_cookie }}</p>
@@ -98,6 +107,9 @@
 
           {% if user == item.seller %}
             <div class="d-grid gap-2 mt-3">
+              <a href="{% url 'marketplace:dashboard' %}" class="btn btn-primary">
+                <i class="bi bi-speedometer2"></i> Back to My Listings
+              </a>
               <a href="{% url 'marketplace:messages_inbox' %}?item={{ item.pk }}" class="btn btn-outline-primary">
                 <i class="bi bi-chat-dots"></i> View messages
               </a>
