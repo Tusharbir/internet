@@ -19,10 +19,10 @@
             {% csrf_token %}
             {% if form.non_field_errors %}
               <div class="alert alert-danger">
-                {% for error in form.non_field_errors %}
+                {% for error in form.non_field_errors %} 
                   <p class="mb-0">{{ error }}</p>
-                {% endfor %}
-              </div>
+                {% endfor %} 
+              </div> 
             {% endif %}
 
             <div class="listing-form-section">
@@ -103,6 +103,7 @@
                 <div class="form-text">{{ form.images.help_text }}</div>
                 {% if form.images.errors %}<div class="text-danger small">{{ form.images.errors.0 }}</div>{% endif %}
               </div>
+
             </div>
             <div id="image-preview" class="row g-2"></div>
             <div class="d-flex flex-wrap gap-2">
@@ -111,20 +112,7 @@
             </div>
           </form>
         </div>
-      </div>
-    </div>
-
-    <div class="col-xl-4">
-      <div class="card shadow-sm listing-form-aside">
-        <div class="card-body">
-          <h5 class="mb-3">Tips for better listings</h5>
-          <div class="listing-tip">
-            <i class="bi bi-type"></i>
-            <div>
-              <strong>Use a specific title</strong>
-              <p class="mb-0 text-muted small">Mention the item type, model, or edition so buyers can recognize it instantly.</p>
-            </div>
-          </div>
+      </div> 
           <div class="listing-tip">
             <i class="bi bi-camera"></i>
             <div>
@@ -143,31 +131,31 @@
       </div>
     </div>
   </div>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} 
+ 
+{% block extra_js %} 
   <script>
-    const input = document.getElementById("id_images");
+    const input = document.getElementById("id_images"); 
     const preview = document.getElementById("image-preview");
-    if (input) {
+    if (input) { 
       input.addEventListener("change", () => {
         preview.innerHTML = "";
-        const files = Array.from(input.files).slice(0, 6);
-        files.forEach((file) => {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const col = document.createElement("div");
+        const files = Array.from(input.files).slice(0, 6); 
+        files.forEach((file) => { 
+          const reader = new FileReader();  
+          reader.onload = (event) => { 
+            const col = document.createElement("div"); 
             col.className = "col-4 col-md-3";
-            col.innerHTML = `
+            col.innerHTML = `  
               <div class="border rounded-3 p-1 bg-white text-center">
                 <img src="${event.target.result}" alt="Preview" class="img-fluid rounded" style="height:100px;object-fit:cover;width:100%;">
                 <small class="text-muted d-block mt-1">${file.name.substring(0,20)}</small>
-              </div>`;
-            preview.appendChild(col);
-          };
-          reader.readAsDataURL(file);
-        });
-      });
+              </div>`; 
+            preview.appendChild(col);   
+          }; 
+          reader.readAsDataURL(file); 
+        }); 
+      }); 
     }
-  </script>
+  </script>  
 {% endblock %}

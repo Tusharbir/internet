@@ -49,6 +49,37 @@
     </div>
   </div>
 
+  {% if visit_count or current_visit_at %}
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100 dashboard-activity-card">
+          <div class="card-body">
+            <p class="text-muted text-uppercase small mb-2">Session Visit Count</p>
+            <h4 class="mb-1">{{ visit_count }}</h4>
+            <p class="small text-muted mb-0">Total listing-detail visits tracked in this session.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100 dashboard-activity-card">
+          <div class="card-body">
+            <p class="text-muted text-uppercase small mb-2">Last Visit</p>
+            {% if last_visit_at %}
+              <h5 class="mb-1">{{ last_visit_at|date:"M d, Y" }}</h5>
+              <p class="small text-muted mb-0">{{ last_visit_at|date:"g:i A" }}</p>
+            {% elif current_visit_at %}
+              <h5 class="mb-1">First tracked visit</h5>
+              <p class="small text-muted mb-0">{{ current_visit_at|date:"M d, Y g:i A" }}</p>
+            {% else %}
+              <h5 class="mb-1">No visits yet</h5>
+              <p class="small text-muted mb-0">Open a few listings and your activity summary will appear here.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
   <!-- Visit History (Session/Cookie tracking) -->
   {% if visit_history %}
     <div class="card shadow-sm mb-4">
@@ -282,3 +313,4 @@
     {% endfor %}
   </div>
 {% endblock %}
+ 

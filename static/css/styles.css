@@ -189,6 +189,10 @@ a:focus {
   background: linear-gradient(160deg, #fff, #f8f3e9);
 }
 
+.dashboard-activity-card {
+  background: linear-gradient(160deg, #fff, #f5f1e8);
+}
+
 .dashboard-listing-card .card-body {
   display: flex;
   flex-direction: column;
