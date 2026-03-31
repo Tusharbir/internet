@@ -135,7 +135,12 @@
               {% if item.images.first %}
                 <img src="{{ item.images.first.image.url }}" alt="{{ item.title }}">
               {% else %}
-                <div class="listing-placeholder"></div>
+                <div class="listing-placeholder">
+                  <div class="listing-media-placeholder">
+                    <i class="bi bi-image"></i>
+                    <small>No image uploaded</small>
+                  </div>
+                </div>
               {% endif %}
             </div>
             <div class="listing-body">

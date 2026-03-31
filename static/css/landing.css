@@ -219,6 +219,11 @@
   background: linear-gradient(135deg, rgba(31, 30, 27, 0.1), rgba(198, 161, 91, 0.2));
 }
 
+.listing-placeholder .listing-media-placeholder {
+  height: 100%;
+  padding: 1rem;
+}
+
 .listing-body {
   padding: 1.5rem;
 }
