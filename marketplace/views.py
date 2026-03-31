@@ -27,6 +27,7 @@ from .forms import (
     MessageForm,
     ReportForm,
     UserRegistrationForm,
+    UserProfileForm,
 )
 from .models import Category, Favorite, Item, ItemImage, Message, Report, User
 
@@ -133,6 +134,30 @@ class UserLoginView(LoginView):
         return reverse('marketplace:browse')
 
 #landing view
+
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'marketplace/profile.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['profile_user'] = self.request.user
+        return context
+
+
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+    model = User
+    form_class = UserProfileForm
+    template_name = 'marketplace/profile_edit.html'
+    success_url = reverse_lazy('marketplace:profile')
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Your profile was updated successfully.')
+        return super().form_valid(form)
+
+
 class LandingView(TemplateView):
     template_name = 'landing.html'
 
