@@ -3,20 +3,31 @@
 {% block title %}Favorites | UniTrade{% endblock %}
 
 {% block content %}
-  <h2 class="mb-4">My favorites</h2>
+  <h2 class="mb-1">My favorites</h2>
+  <p class="text-muted mb-4">Saved listings stay here for quick access.</p>
   <div class="row g-4">
     {% for item in items %}
       <div class="col-md-6 col-xl-4">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm browse-listing-card{% if item.status == 'sold' %} browse-listing-card--sold{% endif %}">
           {% if item.images.first %}
             <img src="{{ item.images.first.image.url }}" class="card-img-top" alt="{{ item.title }}">
+          {% else %}
+            <div class="card-img-top-placeholder">
+              <div class="listing-media-placeholder">
+                <i class="bi bi-image"></i>
+                <small>No image uploaded</small>
+              </div>
+            </div>
           {% endif %}
-          <div class="card-body">
-            <h5>{{ item.title }}</h5>
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">{{ item.title }}</h5>
             <p class="text-muted small">{{ item.category.name }} • {{ item.get_condition_display }}</p>
-            <div class="d-flex justify-content-between align-items-center">
+            {% if item.status == 'sold' %}
+              <span class="badge text-bg-dark mb-2 badge-sold-pill" style="width:fit-content">Sold</span>
+            {% endif %}
+            <div class="d-flex justify-content-between align-items-center mt-auto">
               <span class="fw-semibold">${{ item.price|floatformat:2 }}</span>
-              <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-outline-primary btn-sm">
+              <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-outline-primary btn-sm stretched-link">
                 View
               </a>
             </div>
@@ -25,7 +36,12 @@
       </div>
     {% empty %}
       <div class="col-12">
-        <div class="alert alert-info">No favorites yet. Browse listings to save items.</div>
+        <div class="browse-empty-state">
+          <i class="bi bi-heart" aria-hidden="true"></i>
+          <h3>No favorites yet</h3>
+          <p class="text-muted mb-3">Browse the marketplace and tap the heart on any listing to save it here.</p>
+          <a href="{% url 'marketplace:browse' %}" class="btn btn-primary btn-sm">Browse listings</a>
+        </div>
       </div>
     {% endfor %}
   </div>
