@@ -4,7 +4,7 @@
 
 {% block content %}
   <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-lg-8"> 
         <div class="card shadow-sm">
         <div class="card-body">
           <h3 class="card-title mb-3">Edit listing</h3>
@@ -47,30 +47,30 @@
               </div>
             </div>
             <div>
-              {{ form.category.label_tag }}
-              {{ form.category }}
-              {% if form.category.errors %}<div class="text-danger small">{{ form.category.errors.0 }}</div>{% endif %}
-            </div>
-            <div class="row g-3">
-              <div class="col-md-6">
-                {{ form.location.label_tag }}
-                {{ form.location }}
+              {{ form.category.label_tag }} 
+              {{ form.category }} 
+              {% if form.category.errors %}<div class="text-danger small">{{ form.category.errors.0 }}</div>{% endif %} 
+            </div> 
+            <div class="row g-3">  
+              <div class="col-md-6">  
+                {{ form.location.label_tag }} 
+                {{ form.location }} 
                 {% if form.location.help_text %}<div class="form-text">{{ form.location.help_text }}</div>{% endif %}
                 {% if form.location.errors %}<div class="text-danger small">{{ form.location.errors.0 }}</div>{% endif %}
-              </div>
-              <div class="col-md-6">
-                {{ form.status.label_tag }}
-                {{ form.status }}
-                {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors.0 }}</div>{% endif %}
-              </div>
-            </div>
-            <div class="form-check form-switch">
-              {{ form.negotiable }}
-              <label class="form-check-label" for="{{ form.negotiable.id_for_label }}">
-                Negotiable
-              </label>
-            </div>
-
+              </div> 
+              <div class="col-md-6"> 
+                {{ form.status.label_tag }}  
+                {{ form.status }}  
+                {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors.0 }}</div>{% endif %} 
+              </div> 
+            </div> 
+            <div class="form-check form-switch"> 
+              {{ form.negotiable }} 
+              <label class="form-check-label" for="{{ form.negotiable.id_for_label }}"> 
+                Negotiable 
+              </label> 
+            </div> 
+ 
             <!-- Existing images with delete option -->
             {% if existing_images %}
               <div>
