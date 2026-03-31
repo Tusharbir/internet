@@ -95,8 +95,27 @@
     <div class="row g-4">
       {% for category in categories %}
         <div class="col-6 col-lg-4">
-          <a class="category-tile" href="{% url 'marketplace:browse' %}?category={{ category.pk }}">
-            <span>{{ category.name }}</span>
+          <a class="category-tile category-tile-{{ category.slug }}" href="{% url 'marketplace:browse' %}?category={{ category.pk }}">
+            <div class="category-icon">
+              {% if category.slug == 'electronics' %}
+                <i class="bi bi-laptop"></i>
+              {% elif category.slug == 'textbooks' %}
+                <i class="bi bi-journal-bookmark"></i>
+              {% elif category.slug == 'furniture' %}
+                <i class="bi bi-house-heart"></i>
+              {% elif category.slug == 'kitchen' %}
+                <i class="bi bi-cup-straw"></i>
+              {% elif category.slug == 'clothing' %}
+                <i class="bi bi-bag-heart"></i>
+              {% elif category.slug == 'sports' %}
+                <i class="bi bi-basketball"></i>
+              {% elif category.slug == 'appliances' %}
+                <i class="bi bi-plug"></i>
+              {% else %}
+                <i class="bi bi-stars"></i>
+              {% endif %}
+            </div>
+            <span class="category-label">{{ category.name }}</span>
           </a>
         </div>
       {% endfor %}

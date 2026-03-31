@@ -130,16 +130,78 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  gap: 0.65rem;
   min-height: 120px;
   text-decoration: none;
   color: var(--ut-charcoal);
   font-weight: 600;
   border: 1px solid rgba(198, 161, 91, 0.3);
+  text-align: center;
 }
 
 .category-tile:hover {
   color: var(--ut-charcoal);
   box-shadow: 0 0 0 3px var(--ut-gold-glow);
+}
+
+.category-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  background: rgba(31, 30, 27, 0.06);
+  color: var(--ut-charcoal);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.category-label {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Category-specific accents */
+.category-tile-electronics .category-icon {
+  background: linear-gradient(135deg, rgba(26, 115, 232, 0.12), rgba(26, 115, 232, 0.25));
+  color: #1a73e8;
+}
+
+.category-tile-textbooks .category-icon {
+  background: linear-gradient(135deg, rgba(102, 86, 238, 0.12), rgba(102, 86, 238, 0.24));
+  color: #6656ee;
+}
+
+.category-tile-furniture .category-icon {
+  background: linear-gradient(135deg, rgba(205, 140, 93, 0.12), rgba(205, 140, 93, 0.24));
+  color: #b06a2d;
+}
+
+.category-tile-kitchen .category-icon {
+  background: linear-gradient(135deg, rgba(47, 153, 110, 0.12), rgba(47, 153, 110, 0.24));
+  color: #2f996e;
+}
+
+.category-tile-clothing .category-icon {
+  background: linear-gradient(135deg, rgba(220, 20, 140, 0.12), rgba(220, 20, 140, 0.24));
+  color: #c21884;
+}
+
+.category-tile-sports .category-icon {
+  background: linear-gradient(135deg, rgba(255, 136, 0, 0.14), rgba(255, 136, 0, 0.26));
+  color: #d47500;
+}
+
+.category-tile-appliances .category-icon {
+  background: linear-gradient(135deg, rgba(0, 132, 168, 0.12), rgba(0, 132, 168, 0.24));
+  color: #0084a8;
+}
+
+.category-tile-other .category-icon {
+  background: linear-gradient(135deg, rgba(31, 30, 27, 0.08), rgba(198, 161, 91, 0.18));
+  color: var(--ut-charcoal);
 }
 
 .listing-card {
