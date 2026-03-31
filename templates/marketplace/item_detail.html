@@ -126,6 +126,11 @@
                   {% csrf_token %}
                   <button type="submit" class="btn btn-dark w-100">Mark as sold</button>
                 </form>
+              {% else %}
+                <form method="post" action="{% url 'marketplace:item_list_again' item.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success w-100">List again</button>
+                </form>
               {% endif %}
             </div>
           {% endif %}

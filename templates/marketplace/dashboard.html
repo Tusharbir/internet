@@ -227,7 +227,13 @@
             <h5>{{ item.title }}</h5>
             <p class="text-muted small">{{ item.category.name }} &bull; ${{ item.price|floatformat:2 }}</p>
             <p class="text-muted small mb-3">Updated {{ item.updated_at|date:"M d, Y" }}</p>
-            <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-outline-primary btn-sm">View</a>
+            <div class="d-flex flex-wrap gap-2">
+              <a href="{% url 'marketplace:item_detail' item.pk %}" class="btn btn-outline-primary btn-sm">View</a>
+              <form method="post" action="{% url 'marketplace:item_list_again' item.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-success btn-sm" type="submit">List again</button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

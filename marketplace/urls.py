@@ -34,6 +34,7 @@ urlpatterns = [
     path('items/<int:pk>/edit/', views.ItemUpdateView.as_view(), name='item_update'),
     path('items/<int:pk>/delete/', views.ItemDeleteView.as_view(), name='item_delete'),
     path('items/<int:pk>/mark-sold/', views.MarkSoldView.as_view(), name='item_mark_sold'),
+    path('items/<int:pk>/list-again/', views.ListAgainView.as_view(), name='item_list_again'),
     path('items/<int:pk>/favorite/', views.FavoriteToggleView.as_view(), name='item_favorite'),
     path('items/<int:pk>/report/', views.ReportItemView.as_view(), name='item_report'),
     path('items/<int:pk>/messages/', views.ItemMessageView.as_view(), name='item_messages'),
