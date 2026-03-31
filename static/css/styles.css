@@ -168,6 +168,58 @@ a:focus {
   background: linear-gradient(160deg, #fff, #f4ede0);
 }
 
+.dashboard-hero {
+  background:
+    radial-gradient(circle at top right, rgba(198, 161, 91, 0.22), transparent 30%),
+    linear-gradient(135deg, #f8f1e6, #fbf9f6 60%, #f1ebde);
+  box-shadow: var(--ut-shadow);
+}
+
+.dashboard-kicker {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ut-soft-charcoal);
+}
+
+.dashboard-metric-card {
+  background: linear-gradient(160deg, #fff, #f8f3e9);
+}
+
+.dashboard-listing-card .card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-listing-card .card-body .d-flex:last-child,
+.dashboard-listing-card .card-body > a.btn {
+  margin-top: auto;
+}
+
+.dashboard-empty-state {
+  padding: 2rem 1.5rem;
+  border: 1px dashed rgba(31, 30, 27, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.58);
+  text-align: center;
+}
+
+.dashboard-empty-state i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.9rem;
+  border-radius: 999px;
+  background: rgba(31, 30, 27, 0.08);
+  color: var(--ut-soft-charcoal);
+  font-size: 1.35rem;
+}
+
 .admin-metric-label {
   display: inline-block;
   margin-bottom: 0.6rem;
