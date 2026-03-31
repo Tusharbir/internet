@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Something went wrong — UniTrade{% endblock %}
+
+{% block content %}
+  <section class="dashboard-hero card border-0 mb-4">
+    <div class="card-body p-4 p-lg-5 text-center">
+      <p class="dashboard-kicker mb-2">Error 500</p>
+      <h1 class="mb-3">Something went wrong</h1>
+      <p class="lead text-muted mb-4">
+        We hit an unexpected problem on our side. Please try again in a moment.
+      </p>
+      <div class="d-flex flex-wrap justify-content-center gap-2">
+        <a class="btn btn-primary" href="{% url 'marketplace:landing' %}">Go home</a>
+        <a class="btn btn-outline-secondary" href="{% url 'marketplace:browse' %}">Browse listings</a>
+      </div>
+    </div>
+  </section>
+{% endblock %}
