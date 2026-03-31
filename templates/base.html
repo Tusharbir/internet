@@ -36,6 +36,9 @@
               <a class="nav-link" href="{% url 'marketplace:browse' %}">Browse</a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" href="{% url 'marketplace:about' %}">About</a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" href="{% url 'marketplace:landing' %}#categories">Categories</a>
             </li>
             <li class="nav-item">
@@ -111,6 +114,7 @@
           <div class="col-md-4 text-md-center">
             <div class="footer-links">
               <a href="{% url 'marketplace:browse' %}">Browse</a>
+              <a href="{% url 'marketplace:about' %}">About</a>
               <a href="{% url 'marketplace:landing' %}#how-it-works">How it Works</a>
               {% if user.is_authenticated %}
                 <a href="{% url 'marketplace:dashboard' %}">Dashboard</a>

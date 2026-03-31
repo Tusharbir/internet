@@ -224,6 +224,77 @@ a:focus {
   font-size: 1.35rem;
 }
 
+.about-checklist {
+  padding-left: 1.2rem;
+}
+
+.about-highlight-card {
+  height: 100%;
+  padding: 1.5rem;
+  border-radius: 20px;
+  background: linear-gradient(160deg, #fff, #f8f3e9);
+  border: 1px solid var(--ut-border);
+  box-shadow: var(--ut-shadow);
+}
+
+.about-highlight-icon,
+.about-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(198, 161, 91, 0.22), rgba(31, 30, 27, 0.08));
+  color: var(--ut-charcoal);
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.about-action-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 100%;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--ut-border);
+  box-shadow: 0 10px 24px rgba(31, 30, 27, 0.08);
+}
+
+.about-action-card i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  background: rgba(198, 161, 91, 0.16);
+  color: var(--ut-charcoal);
+  font-size: 1.1rem;
+}
+
+.about-action-card span {
+  font-weight: 600;
+  color: var(--ut-soft-charcoal);
+}
+
+.about-team-card .card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.about-team-card ul {
+  padding-left: 1.1rem;
+}
+
+.about-team-card li + li {
+  margin-top: 0.45rem;
+}
+
 .listing-form-card {
   overflow: hidden;
 }

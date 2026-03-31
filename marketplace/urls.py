@@ -6,20 +6,8 @@ from . import views
 app_name = 'marketplace'
 
 urlpatterns = [
-    path('', views.LandingView.as_view(), name='landing'),                                      # landing page url
-    path('browse/', views.BrowseListView.as_view(), name='browse'),                             # marketplace browsing url
-    path('favorites/', views.FavoritesListView.as_view(), name='favorites'),                    # user favorites url
-    path('messages/', views.MessagesInboxView.as_view(), name='messages_inbox'),                # user messages inbox url
-    path('register/', views.RegisterView.as_view(), name='register'),                           # user registration url
-    path('dashboard/', views.DashboardView.as_view(), name='dashboard'),                        # user dashboard url
-    path('admin-panel/', views.AdminDashboardView.as_view(), name='admin_dashboard'),           # admin panel url
-    path('admin-panel/items/', views.AdminItemListView.as_view(), name='admin_items'),          # admin item management url
-    path('admin-panel/items/<int:pk>/action/', views.AdminItemActionView.as_view(), name='admin_item_action'),  # admin item action url
-    path('admin-panel/reports/', views.AdminReportListView.as_view(), name='admin_reports'),    # admin report management url   
-    path('admin-panel/reports/<int:pk>/action/', views.AdminReportActionView.as_view(), name='admin_report_action'),        # admin report action url
-    path('admin-panel/users/', views.AdminUserListView.as_view(), name='admin_users'),      # admin user management url
-    path('admin-panel/users/<int:pk>/action/', views.AdminUserActionView.as_view(), name='admin_user_action'),  # admin user action url
     path('', views.LandingView.as_view(), name='landing'),
+    path('about/', views.AboutView.as_view(), name='about'),
     path('browse/', views.BrowseListView.as_view(), name='browse'),
     path('favorites/', views.FavoritesListView.as_view(), name='favorites'),
     path('messages/', views.MessagesInboxView.as_view(), name='messages_inbox'),
