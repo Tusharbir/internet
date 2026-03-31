@@ -5,9 +5,10 @@
 {% block content %}
   <div class="row justify-content-center">
     <div class="col-lg-8">
-      <div class="card shadow-sm">
+        <div class="card shadow-sm">
         <div class="card-body">
           <h3 class="card-title mb-3">Edit listing</h3>
+          <p class="text-muted">Update your listing details, manage images, and keep the post accurate for buyers.</p>
           <form method="post" enctype="multipart/form-data" class="vstack gap-3" id="edit-ad-form">
             {% csrf_token %}
             {% if form.non_field_errors %}
@@ -20,11 +21,13 @@
             <div>
               {{ form.title.label_tag }}
               {{ form.title }}
+              {% if form.title.help_text %}<div class="form-text">{{ form.title.help_text }}</div>{% endif %}
               {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors.0 }}</div>{% endif %}
             </div>
             <div>
               {{ form.description.label_tag }}
               {{ form.description }}
+              {% if form.description.help_text %}<div class="form-text">{{ form.description.help_text }}</div>{% endif %}
               {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
             </div>
             <div class="row g-3">
@@ -34,25 +37,31 @@
                   <span class="input-group-text">$</span>
                   {{ form.price }}
                 </div>
+                {% if form.price.help_text %}<div class="form-text">{{ form.price.help_text }}</div>{% endif %}
                 {% if form.price.errors %}<div class="text-danger small">{{ form.price.errors.0 }}</div>{% endif %}
               </div>
               <div class="col-md-6">
                 {{ form.condition.label_tag }}
                 {{ form.condition }}
+                {% if form.condition.errors %}<div class="text-danger small">{{ form.condition.errors.0 }}</div>{% endif %}
               </div>
             </div>
             <div>
               {{ form.category.label_tag }}
               {{ form.category }}
+              {% if form.category.errors %}<div class="text-danger small">{{ form.category.errors.0 }}</div>{% endif %}
             </div>
             <div class="row g-3">
               <div class="col-md-6">
                 {{ form.location.label_tag }}
                 {{ form.location }}
+                {% if form.location.help_text %}<div class="form-text">{{ form.location.help_text }}</div>{% endif %}
+                {% if form.location.errors %}<div class="text-danger small">{{ form.location.errors.0 }}</div>{% endif %}
               </div>
               <div class="col-md-6">
                 {{ form.status.label_tag }}
                 {{ form.status }}
+                {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors.0 }}</div>{% endif %}
               </div>
             </div>
             <div class="form-check form-switch">
@@ -90,7 +99,10 @@
               {% if form.images.errors %}<div class="text-danger small">{{ form.images.errors.0 }}</div>{% endif %}
             </div>
             <div id="image-preview" class="row g-2"></div>
-            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save changes</button>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save changes</button>
+              <a href="{% url 'marketplace:item_detail' object.pk %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
           </form>
         </div>
       </div>

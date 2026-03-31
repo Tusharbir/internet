@@ -346,6 +346,21 @@ class ItemCreateViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Item.objects.filter(title='No Image Item Here').exists())
 
+    def test_create_item_negative_price_fails(self):
+        img = SimpleUploadedFile('test.gif', _tiny_gif(), content_type='image/gif')
+        response = self.client.post(reverse('marketplace:item_post'), {
+            'title': 'Negative Price Item',
+            'description': 'This item should fail because the price is below zero.',
+            'price': '-1.00',
+            'condition': Item.CONDITION_GOOD,
+            'category': self.cat.pk,
+            'status': Item.STATUS_PUBLISHED,
+            'images': img,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Price must be zero or greater.')
+        self.assertFalse(Item.objects.filter(title='Negative Price Item').exists())
+
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
 class ItemUpdateViewTests(TestCase):
@@ -389,6 +404,21 @@ class ItemUpdateViewTests(TestCase):
         self.item.refresh_from_db()
         self.assertEqual(self.item.title, 'Updated Item Title')
         self.assertEqual(self.item.price, Decimal('150.00'))
+
+    def test_update_rejects_invalid_delete_image_ids(self):
+        self.client.login(username='seller', password='testpass123')
+        response = self.client.post(reverse('marketplace:item_update', kwargs={'pk': self.item.pk}), {
+            'title': 'Edit Me Item',
+            'description': 'This item will be edited in tests with invalid image ids.',
+            'price': '100.00',
+            'condition': Item.CONDITION_NEW,
+            'category': self.cat.pk,
+            'location': 'UWindsor Campus',
+            'status': Item.STATUS_PUBLISHED,
+            'delete_images': 'abc',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'One or more selected images could not be removed.')
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
@@ -438,6 +468,18 @@ class MarkSoldViewTests(TestCase):
         self.client.login(username='other', password='testpass123')
         response = self.client.post(reverse('marketplace:item_mark_sold', kwargs={'pk': self.item.pk}))
         self.assertEqual(response.status_code, 403)
+
+    def test_mark_sold_twice_is_handled_gracefully(self):
+        self.client.login(username='seller', password='testpass123')
+        self.client.post(reverse('marketplace:item_mark_sold', kwargs={'pk': self.item.pk}))
+
+        response = self.client.post(
+            reverse('marketplace:item_mark_sold', kwargs={'pk': self.item.pk}),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'This listing is already marked as sold.')
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)
@@ -686,6 +728,33 @@ class DashboardViewTests(TestCase):
         self.assertEqual(rv[0].pk, items[2].pk)
         self.assertEqual(rv[1].pk, items[1].pk)
         self.assertEqual(rv[2].pk, items[0].pk)
+
+    def test_dashboard_exposes_listing_counts(self):
+        Item.objects.create(
+            seller=self.user, category=self.cat,
+            title='Draft Count', description='Draft listing used for count checks.',
+            price=Decimal('10.00'), condition=Item.CONDITION_NEW,
+            status=Item.STATUS_DRAFT,
+        )
+        Item.objects.create(
+            seller=self.user, category=self.cat,
+            title='Published Count', description='Published listing used for count checks.',
+            price=Decimal('11.00'), condition=Item.CONDITION_GOOD,
+            status=Item.STATUS_PUBLISHED,
+        )
+        Item.objects.create(
+            seller=self.user, category=self.cat,
+            title='Sold Count', description='Sold listing used for count checks.',
+            price=Decimal('12.00'), condition=Item.CONDITION_FAIR,
+            status=Item.STATUS_SOLD,
+        )
+
+        response = self.client.get(reverse('marketplace:dashboard'))
+
+        self.assertEqual(response.context['listing_counts']['all'], 3)
+        self.assertEqual(response.context['listing_counts']['draft'], 1)
+        self.assertEqual(response.context['listing_counts']['published'], 1)
+        self.assertEqual(response.context['listing_counts']['sold'], 1)
 
 
 @override_settings(MEDIA_ROOT=MEDIA_ROOT)

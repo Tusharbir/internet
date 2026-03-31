@@ -6,7 +6,7 @@ from .models import Category, Item, Message, Report, User
 
 
 class UserRegistrationForm(UserCreationForm):
-    university_email = forms.EmailField(required=False)
+    university_email = forms.EmailField(required=True, help_text='Use your @uwindsor.ca email.')
     student_id = forms.CharField(required=False)
 
     class Meta(UserCreationForm.Meta):
@@ -32,6 +32,14 @@ class UserRegistrationForm(UserCreationForm):
                 field.widget.attrs.setdefault('autocomplete', 'username')
             else:
                 field.widget.attrs.setdefault('autocomplete', 'off')
+
+    def clean_university_email(self):
+        email = (self.cleaned_data.get('university_email') or '').strip().lower()
+        if not email:
+            raise forms.ValidationError('University email is required.')
+        if not email.endswith('@uwindsor.ca'):
+            raise forms.ValidationError('Please use your @uwindsor.ca email address.')
+        return email
 
 
 class MultiFileInput(forms.FileInput):
@@ -110,6 +118,10 @@ class ItemForm(forms.ModelForm):
                 (Item.STATUS_DRAFT, 'Draft'),
                 (Item.STATUS_PUBLISHED, 'Published'),
             ]
+        self.fields['title'].help_text = 'Use a clear title between 5 and 80 characters.'
+        self.fields['description'].help_text = 'Add at least 20 characters with relevant details.'
+        self.fields['price'].help_text = 'Enter a price of $0 or more.'
+        self.fields['location'].help_text = 'Add a meetup spot or area on campus.'
 
     def clean_title(self):
         title = self.cleaned_data['title'].strip()
@@ -147,10 +159,15 @@ class ItemForm(forms.ModelForm):
         cleaned_data = super().clean()
         images = cleaned_data.get('images') or []
         delete_ids = self.cleaned_data.get('delete_images', '')
-        delete_count = len([x for x in delete_ids.split(',') if x.strip()]) if delete_ids else 0
+        delete_count = 0
+        if delete_ids:
+            raw_ids = [x.strip() for x in delete_ids.split(',') if x.strip()]
+            if not all(item_id.isdigit() for item_id in raw_ids):
+                raise forms.ValidationError('One or more selected images could not be removed.')
+            delete_count = len(raw_ids)
 
         if self.instance.pk:
-            existing_count = self.instance.images.count() - delete_count
+            existing_count = max(self.instance.images.count() - delete_count, 0)
         else:
             existing_count = 0
 

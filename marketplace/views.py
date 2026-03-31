@@ -6,6 +6,8 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Q, Case, Count, When
 from django.db.models.deletion import ProtectedError
+from django.db import transaction
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -66,6 +68,18 @@ class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
         if self.request.user.is_authenticated:
             messages.error(self.request, 'You do not have access to the admin panel.')
             return redirect('marketplace:browse')
+        return super().handle_no_permission()
+
+
+class SellerOwnsItemMixin(LoginRequiredMixin, UserPassesTestMixin):
+    raise_exception = True
+
+    def test_func(self):
+        return self.get_object().seller == self.request.user
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied('You can only manage your own listings.')
         return super().handle_no_permission()
 
 
@@ -227,6 +241,7 @@ class ItemDetailView(DetailView):
             ).exists()
         else:
             context['is_favorited'] = False
+        context['primary_image'] = self.object.images.first()
         context['last_viewed_cookie'] = self.request.COOKIES.get('last_viewed_item')
         return context
 
@@ -238,8 +253,13 @@ class ItemCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.seller = self.request.user
-        response = super().form_valid(form)
-        self._save_images()
+        try:
+            with transaction.atomic():
+                response = super().form_valid(form)
+                self._save_images()
+        except Exception:
+            form.add_error(None, 'We could not save your listing right now. Please try again.')
+            return self.form_invalid(form)
         messages.success(self.request, 'Item listed successfully.')
         return response
 
@@ -251,25 +271,29 @@ class ItemCreateView(LoginRequiredMixin, CreateView):
         return reverse('marketplace:item_detail', kwargs={'pk': self.object.pk})
 
 
-class ItemUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class ItemUpdateView(SellerOwnsItemMixin, UpdateView):
     model = Item
     form_class = ItemForm
     template_name = 'marketplace/item_edit.html'
 
-    def test_func(self):
-        return self.get_object().seller == self.request.user
-
     def form_valid(self, form):
-        # Delete images marked for deletion
         delete_ids = form.cleaned_data.get('delete_images', '')
-        if delete_ids:
-            ids_to_delete = [int(x) for x in delete_ids.split(',') if x.strip()]
-            for img in ItemImage.objects.filter(id__in=ids_to_delete, item=self.object):
-                img.image.delete(save=False)
-                img.delete()
+        try:
+            with transaction.atomic():
+                if delete_ids:
+                    ids_to_delete = [int(x) for x in delete_ids.split(',') if x.strip()]
+                    for img in ItemImage.objects.filter(id__in=ids_to_delete, item=self.object):
+                        img.image.delete(save=False)
+                        img.delete()
 
-        response = super().form_valid(form)
-        self._save_images()
+                response = super().form_valid(form)
+                self._save_images()
+        except ValueError:
+            form.add_error(None, 'We could not process one of the selected images.')
+            return self.form_invalid(form)
+        except Exception:
+            form.add_error(None, 'We could not update your listing right now. Please try again.')
+            return self.form_invalid(form)
         messages.success(self.request, 'Item updated successfully.')
         return response
 
@@ -286,17 +310,14 @@ class ItemUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return reverse('marketplace:item_detail', kwargs={'pk': self.object.pk})
 
 
-class ItemDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class ItemDeleteView(SellerOwnsItemMixin, DeleteView):
     model = Item
     template_name = 'marketplace/item_confirm_delete.html'
     success_url = reverse_lazy('marketplace:dashboard')
 
-    def test_func(self):
-        return self.get_object().seller == self.request.user
-
-    def form_valid(self, request, *args, **kwargs):
+    def form_valid(self, form):
         messages.success(self.request, 'Item deleted.')
-        return super().form_valid(request, *args, **kwargs)
+        return super().form_valid(form)
 
 
 class DashboardView(LoginRequiredMixin, ListView):
@@ -333,6 +354,12 @@ class DashboardView(LoginRequiredMixin, ListView):
         # Visit history for display (sessions + cookies)
         context['visit_history'] = self.request.session.get('visit_history', {})
         context['recent_message_threads'] = build_message_threads(self.request.user)[:4]
+        context['listing_counts'] = {
+            'all': context['items'].count(),
+            'draft': context['draft_items'].count(),
+            'published': context['published_items'].count(),
+            'sold': context['sold_items'].count(),
+        }
         return context
 
 
@@ -451,15 +478,18 @@ class MessagesInboxView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class MarkSoldView(LoginRequiredMixin, UserPassesTestMixin, View):
+class MarkSoldView(SellerOwnsItemMixin, View):
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
         self.item = get_object_or_404(Item, pk=kwargs['pk'])
 
-    def test_func(self):
-        return self.item.seller == self.request.user
+    def get_object(self):
+        return self.item
 
     def post(self, request, *args, **kwargs):
+        if self.item.status == Item.STATUS_SOLD:
+            messages.info(request, 'This listing is already marked as sold.')
+            return redirect('marketplace:item_detail', pk=self.item.pk)
         self.item.status = Item.STATUS_SOLD
         self.item.save(update_fields=['status'])
         messages.success(request, 'Listing marked as sold.')
