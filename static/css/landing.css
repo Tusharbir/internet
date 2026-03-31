@@ -208,11 +208,27 @@
   overflow: hidden;
 }
 
+.listing-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 180px;
+  background: #fff;
+  overflow: hidden;
+}
+
 .listing-image img,
 .listing-placeholder {
   width: 100%;
   height: 180px;
-  object-fit: cover;
+}
+
+.listing-image img {
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  padding: 0.5rem;
 }
 
 .listing-placeholder {

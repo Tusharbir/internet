@@ -3,12 +3,18 @@
 {% block title %}Edit Listing | UniTrade{% endblock %}
 
 {% block content %}
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card shadow-sm">
+  <div class="row justify-content-center g-4">
+    <div class="col-xl-8">
+      <div class="card shadow-sm listing-form-card">
         <div class="card-body">
-          <h3 class="card-title mb-3">Edit listing</h3>
-          <p class="text-muted">Update your listing details, manage images, and keep the post accurate for buyers.</p>
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
+            <div>
+              <span class="listing-form-kicker">Seller Form</span>
+              <h3 class="card-title mb-2">Edit listing</h3>
+              <p class="text-muted mb-0">Update your listing details, manage images, and keep the post accurate for buyers.</p>
+            </div>
+            <a href="{% url 'marketplace:item_detail' object.pk %}" class="btn btn-outline-secondary">Back to listing</a>
+          </div>
           <form method="post" enctype="multipart/form-data" class="vstack gap-3" id="edit-ad-form">
             {% csrf_token %}
             {% if form.non_field_errors %}
@@ -18,63 +24,81 @@
                 {% endfor %}
               </div>
             {% endif %}
-            <div>
-              {{ form.title.label_tag }}
-              {{ form.title }}
-              {% if form.title.help_text %}<div class="form-text">{{ form.title.help_text }}</div>{% endif %}
-              {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors.0 }}</div>{% endif %}
+
+            <div class="listing-form-section">
+              <h5 class="mb-3">Listing details</h5>
+              <div>
+                {{ form.title.label_tag }}
+                {{ form.title }}
+                {% if form.title.help_text %}<div class="form-text">{{ form.title.help_text }}</div>{% endif %}
+                {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="mt-3">
+                {{ form.description.label_tag }}
+                {{ form.description }}
+                {% if form.description.help_text %}<div class="form-text">{{ form.description.help_text }}</div>{% endif %}
+                {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
+              </div>
             </div>
-            <div>
-              {{ form.description.label_tag }}
-              {{ form.description }}
-              {% if form.description.help_text %}<div class="form-text">{{ form.description.help_text }}</div>{% endif %}
-              {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
-            </div>
-            <div class="row g-3">
-              <div class="col-md-6">
-                {{ form.price.label_tag }}
-                <div class="input-group">
-                  <span class="input-group-text">$</span>
-                  {{ form.price }}
+
+            <div class="listing-form-section">
+              <h5 class="mb-3">Pricing and category</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  {{ form.price.label_tag }}
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    {{ form.price }}
+                  </div>
+                  {% if form.price.help_text %}<div class="form-text">{{ form.price.help_text }}</div>{% endif %}
+                  {% if form.price.errors %}<div class="text-danger small">{{ form.price.errors.0 }}</div>{% endif %}
                 </div>
-                {% if form.price.help_text %}<div class="form-text">{{ form.price.help_text }}</div>{% endif %}
-                {% if form.price.errors %}<div class="text-danger small">{{ form.price.errors.0 }}</div>{% endif %}
+                <div class="col-md-6">
+                  {{ form.condition.label_tag }}
+                  {{ form.condition }}
+                  {% if form.condition.errors %}<div class="text-danger small">{{ form.condition.errors.0 }}</div>{% endif %}
+                </div>
               </div>
-              <div class="col-md-6">
-                {{ form.condition.label_tag }}
-                {{ form.condition }}
-                {% if form.condition.errors %}<div class="text-danger small">{{ form.condition.errors.0 }}</div>{% endif %}
-              </div>
-            </div>
-            <div>
-              {{ form.category.label_tag }}
-              {{ form.category }}
-              {% if form.category.errors %}<div class="text-danger small">{{ form.category.errors.0 }}</div>{% endif %}
-            </div>
-            <div class="row g-3">
-              <div class="col-md-6">
-                {{ form.location.label_tag }}
-                {{ form.location }}
-                {% if form.location.help_text %}<div class="form-text">{{ form.location.help_text }}</div>{% endif %}
-                {% if form.location.errors %}<div class="text-danger small">{{ form.location.errors.0 }}</div>{% endif %}
-              </div>
-              <div class="col-md-6">
-                {{ form.status.label_tag }}
-                {{ form.status }}
-                {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors.0 }}</div>{% endif %}
+              <div class="mt-3">
+                {{ form.category.label_tag }}
+                {{ form.category }}
+                {% if form.category.errors %}<div class="text-danger small">{{ form.category.errors.0 }}</div>{% endif %}
               </div>
             </div>
-            <div class="form-check form-switch">
-              {{ form.negotiable }}
-              <label class="form-check-label" for="{{ form.negotiable.id_for_label }}">
-                Negotiable
-              </label>
+
+            <div class="listing-form-section">
+              <h5 class="mb-3">Availability</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  {{ form.location.label_tag }}
+                  {{ form.location }}
+                  {% if form.location.help_text %}<div class="form-text">{{ form.location.help_text }}</div>{% endif %}
+                  {% if form.location.errors %}<div class="text-danger small">{{ form.location.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                  {{ form.status.label_tag }}
+                  {{ form.status }}
+                  {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors.0 }}</div>{% endif %}
+                </div>
+              </div>
+              <div class="form-check form-switch mt-3">
+                {{ form.negotiable }}
+                <label class="form-check-label" for="{{ form.negotiable.id_for_label }}">
+                  Negotiable
+                </label>
+              </div>
             </div>
 
             <!-- Existing images with delete option -->
             {% if existing_images %}
-              <div>
-                <label class="form-label fw-semibold">Current Images</label>
+              <div class="listing-form-section">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                  <div>
+                    <h5 class="mb-1">Current images</h5>
+                    <p class="text-muted small mb-0">Remove images you no longer want attached to this listing.</p>
+                  </div>
+                  <span class="badge rounded-pill text-bg-light">{{ existing_images|length }} saved</span>
+                </div>
                 <div class="row g-2" id="existing-images">
                   {% for image in existing_images %}
                     <div class="col-4 col-md-3 existing-img-wrapper" data-image-id="{{ image.pk }}">
@@ -92,11 +116,20 @@
 
             {{ form.delete_images }}
 
-            <div>
-              <label class="form-label fw-semibold">Add more images</label>
-              {{ form.images }}
-              <div class="form-text">{{ form.images.help_text }}</div>
-              {% if form.images.errors %}<div class="text-danger small">{{ form.images.errors.0 }}</div>{% endif %}
+            <div class="listing-form-section">
+              <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                <div>
+                  <h5 class="mb-1">Add more images</h5>
+                  <p class="text-muted small mb-0">You can keep existing photos and upload more if needed.</p>
+                </div>
+                <span class="badge rounded-pill text-bg-light">Up to 6 total</span>
+              </div>
+              <div class="listing-upload-panel">
+                <label class="form-label fw-semibold">New images</label>
+                {{ form.images }}
+                <div class="form-text">{{ form.images.help_text }}</div>
+                {% if form.images.errors %}<div class="text-danger small">{{ form.images.errors.0 }}</div>{% endif %}
+              </div>
             </div>
             <div id="image-preview" class="row g-2"></div>
             <div class="d-flex flex-wrap gap-2">
@@ -104,6 +137,35 @@
               <a href="{% url 'marketplace:item_detail' object.pk %}" class="btn btn-outline-secondary">Cancel</a>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="card shadow-sm listing-form-aside">
+        <div class="card-body">
+          <h5 class="mb-3">Quick reminders</h5>
+          <div class="listing-tip">
+            <i class="bi bi-arrow-repeat"></i>
+            <div>
+              <strong>Keep the listing current</strong>
+              <p class="mb-0 text-muted small">Update the price, condition, and status so buyers always see accurate information.</p>
+            </div>
+          </div>
+          <div class="listing-tip">
+            <i class="bi bi-images"></i>
+            <div>
+              <strong>Review your images</strong>
+              <p class="mb-0 text-muted small">Use clear photos and remove outdated images when the item changes.</p>
+            </div>
+          </div>
+          <div class="listing-tip">
+            <i class="bi bi-shield-check"></i>
+            <div>
+              <strong>Keep buyer trust high</strong>
+              <p class="mb-0 text-muted small">A complete description and honest condition make messages and meetups much smoother.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
