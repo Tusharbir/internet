@@ -16,7 +16,7 @@ db.sqlite3
 *.sqlite3
 
 # Media & uploads
-media/
+# media/
 
 # Environment / secrets
 .env
